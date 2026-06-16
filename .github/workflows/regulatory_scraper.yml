@@ -1,0 +1,48 @@
+# File location in your repo: .github/workflows/regulatory_scraper.yml
+# This tells GitHub to run your Python scraper every 6 hours, for free.
+
+name: Regulatory filing monitor
+
+on:
+  schedule:
+    # Runs at 00:00, 06:00, 12:00, and 18:00 UTC every day
+    - cron: '0 0,6,12,18 * * *'
+  # This button lets you trigger it manually from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download your repository code onto the GitHub server
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 2: Install Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Step 3: No extra libraries needed — we use Python's built-in urllib
+
+      # Step 4: Run your scraper
+      - name: Run scraper
+        env:
+          GMAIL_USER:         ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_EMAIL:        ${{ secrets.ALERT_EMAIL }}
+        run: python regulatory_scraper.py
+
+      # Step 5: Commit the updated data file back to your repo
+      # (so the dashboard can read it)
+      - name: Commit updated data
+        run: |
+          git config user.name  "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "Data update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
