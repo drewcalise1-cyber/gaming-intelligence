@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gaming Intelligence Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #ececea;
+    --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --teal: #0F6E56; --teal-bg: #E1F5EE;
+    --blue: #185FA5; --blue-bg: #E6F1FB;
+    --amber: #854F0B; --amber-bg: #FAEEDA;
+    --red: #A32D2D; --red-bg: #FCEBEB;
+    --purple: #534AB7; --purple-bg: #EEEDFE;
+    --green: #3B6D11; --green-bg: #EAF3DE;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #242422; --bg3: #2e2e2c;
+      --text: #e8e6de; --text2: #a8a69e; --text3: #6e6d68;
+      --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
+    }
+  }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+  .app { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: var(--text3); margin-bottom: 24px; }
+  .api-bar { display: flex; gap: 8px; margin-bottom: 24px; padding: 12px; background: var(--bg2); border-radius: var(--radius-lg); border: 0.5px solid var(--border); }
+  .api-bar input { flex: 1; font-size: 12px; padding: 6px 10px; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); }
+  .api-bar button { font-size: 12px; padding: 6px 14px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--text); color: var(--bg); cursor: pointer; white-space: nowrap; }
+  .api-status { font-size: 11px; color: var(--text3); align-self: center; }
+  .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 20px; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+  .panel { display: none; } .panel.active { display: block; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .chip { font-size: 11px; padding: 3px 10px; border-radius: 20px; cursor: pointer; border: 0.5px solid var(--border2); background: none; color: var(--text2); }
+  .chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .note { font-size: 11px; color: var(--text3); font-style: italic; margin-bottom: 12px; }
+  .loading { font-size: 13px; color: var(--text3); padding: 20px 0; text-align: center; }
+  /* Calendar */
+  .ev-row { display: flex; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); align-items: flex-start; }
+  .ev-row:last-child { border: none; }
+  .ev-badge { min-width: 50px; max-width: 50px; text-align: center; padding: 3px 5px; border-radius: var(--radius); font-size: 10px; font-weight: 500; line-height: 1.3; }
+  .ev-title { font-size: 13px; font-weight: 500; }
+  .ev-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .ev-pill { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 500; margin-left: 5px; vertical-align: middle; }
+  /* Momentum */
+  .msearch { display: flex; gap: 8px; margin-bottom: 14px; }
+  .msearch input { flex: 1; font-size: 13px; padding: 7px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); }
+  .msearch button { font-size: 13px; padding: 7px 16px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--text); color: var(--bg); cursor: pointer; }
+  .score-block { display: flex; gap: 16px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 0.5px solid var(--border); align-items: center; }
+  .score-num { font-size: 40px; font-weight: 500; line-height: 1; }
+  .score-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .score-summary { font-size: 13px; flex: 1; }
+  .trend-pill { display: inline-block; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; margin-top: 6px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .bar-label { font-size: 11px; color: var(--text2); min-width: 140px; }
+  .bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+  .bar-val { font-size: 11px; font-weight: 500; min-width: 24px; text-align: right; }
+  .sec-label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 8px; }
+  .headline-card { background: var(--bg2); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; }
+  .headline-title { font-size: 13px; font-weight: 500; }
+  .headline-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .sent-pill { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; margin-left: 5px; }
+  /* Regulatory */
+  .reg-row { display: flex; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); align-items: flex-start; }
+  .reg-row:last-child { border: none; }
+  .reg-src { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; align-self: flex-start; }
+  .reg-title { font-size: 13px; font-weight: 500; }
+  .reg-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .sig-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+  .new-badge { display: inline-block; font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 4px; background: var(--red-bg); color: var(--red); margin-left: 5px; vertical-align: middle; }
+  .refresh-btn { font-size: 12px; padding: 4px 12px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: none; color: var(--text2); cursor: pointer; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Gaming intelligence</h1>
+  <p class="subtitle">Events calendar &nbsp;·&nbsp; Media momentum &nbsp;·&nbsp; Regulatory filings</p>
+
+  <div class="api-bar">
+    <input type="password" id="api-key-input" placeholder="Paste your Anthropic API key (sk-ant-api03-...)"/>
+    <button onclick="saveKey()">Save key</button>
+    <span class="api-status" id="api-status">No key saved</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('cal',this)">Events &amp; releases</button>
+    <button class="tab" onclick="switchTab('mom',this)">Media momentum</button>
+    <button class="tab" onclick="switchTab('reg',this)">Filing monitor</button>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="panel active" id="panel-cal">
+    <div class="panel-header">
+      <div class="chip-row" id="cal-chips" style="margin:0">
+        <button class="chip active" onclick="filterCal('all',this)">All</button>
+        <button class="chip" onclick="filterCal('event',this)">Events</button>
+        <button class="chip" onclick="filterCal('release',this)">Releases</button>
+        <button class="chip" onclick="filterCal('hardware',this)">Hardware</button>
+      </div>
+      <button class="refresh-btn" onclick="loadCal()">Refresh</button>
+    </div>
+    <p class="note">Live data via Claude web search — upcoming gaming events and confirmed release windows</p>
+    <div id="cal-list"><div class="loading">Enter your API key above to load events</div></div>
+  </div>
+
+  <!-- MOMENTUM -->
+  <div class="panel" id="panel-mom">
+    <p class="note">Search a publisher or title — Claude scans recent articles and scores media momentum</p>
+    <div class="msearch">
+      <input type="text" id="mom-input" placeholder="e.g. Rockstar Games, Nintendo, Take-Two..."/>
+      <button onclick="runMom()">Scan</button>
+    </div>
+    <div id="mom-results"></div>
+  </div>
+
+  <!-- REGULATORY -->
+  <div class="panel" id="panel-reg">
+    <div class="panel-header">
+      <div class="chip-row" id="reg-chips" style="margin:0">
+        <button class="chip active" onclick="filterReg('all',this)">All sources</button>
+        <button class="chip" onclick="filterReg('ESRB',this)">ESRB</button>
+        <button class="chip" onclick="filterReg('PEGI',this)">PEGI</button>
+        <button class="chip" onclick="filterReg('USPTO',this)">USPTO</button>
+      </div>
+      <button class="refresh-btn" onclick="loadReg()">Refresh</button>
+    </div>
+    <p class="note">Claude searches public regulatory databases for recent gaming filings. Also reads from your local data file when available.</p>
+    <div id="reg-list"><div class="loading">Enter your API key above to load filings</div></div>
+  </div>
+</div>
+
+<script>
+const C = {
+  event:   {bg:'#E6F1FB',c:'#185FA5'},
+  release: {bg:'#E1F5EE',c:'#0F6E56'},
+  hardware:{bg:'#FAEEDA',c:'#854F0B'},
+  ESRB:    {bg:'#FAECE7',c:'#993C1D'},
+  PEGI:    {bg:'#EEEDFE',c:'#534AB7'},
+  USPTO:   {bg:'#EAF3DE',c:'#3B6D11'},
+};
+
+let API_KEY = localStorage.getItem('gid_api_key') || '';
+let calData = [], regData = [], calFilter = 'all', regFilter = 'all';
+
+function init() {
+  if (API_KEY) {
+    document.getElementById('api-key-input').value = API_KEY;
+    document.getElementById('api-status').textContent = 'Key loaded';
+    loadCal();
+    loadReg();
+  }
+}
+
+function saveKey() {
+  const k = document.getElementById('api-key-input').value.trim();
+  if (!k.startsWith('sk-ant')) { alert('That does not look like an Anthropic API key. It should start with sk-ant-'); return; }
+  API_KEY = k;
+  localStorage.setItem('gid_api_key', k);
+  document.getElementById('api-status').textContent = 'Key saved';
+  loadCal();
+  loadReg();
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+function filterCal(f, btn) {
+  calFilter = f;
+  document.querySelectorAll('#cal-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderCal();
+}
+
+function filterReg(f, btn) {
+  regFilter = f;
+  document.querySelectorAll('#reg-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderReg();
+}
+
+async function claudeCall(userPrompt) {
+  if (!API_KEY) { alert('Please enter your Anthropic API key first.'); return null; }
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-calls': 'true' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1200,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message);
+  return (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+}
+
+function parseJSON(raw) {
+  try { return JSON.parse(raw.trim()); } catch {
+    const arr = raw.match(/\[[\s\S]*\]/);
+    if (arr) try { return JSON.parse(arr[0]); } catch {}
+    const obj = raw.match(/\{[\s\S]*\}/);
+    if (obj) try { return JSON.parse(obj[0]); } catch {}
+    return null;
+  }
+}
+
+async function loadCal() {
+  if (!API_KEY) return;
+  document.getElementById('cal-list').innerHTML = '<div class="loading">Searching for upcoming gaming events...</div>';
+  try {
+    const raw = await claudeCall(`Search for upcoming video game industry events and confirmed major game releases in 2025-2026. Return ONLY a JSON array (no markdown, no explanation) with up to 14 items. Each item must have exactly these keys: {"title":"...","date":"Mon DD YYYY or Q1 2026 etc","type":"event|release|hardware","detail":"one short sentence"}. Include gaming conventions (Gamescom, Summer Game Fest, Nintendo Direct, Xbox showcase, State of Play), major confirmed release dates, and hardware announcements. Sort by date ascending.`);
+    const data = parseJSON(raw);
+    calData = Array.isArray(data) ? data : [];
+    renderCal();
+  } catch(e) {
+    document.getElementById('cal-list').innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+  }
+}
+
+function renderCal() {
+  const el = document.getElementById('cal-list');
+  const items = calFilter === 'all' ? calData : calData.filter(i => i.type === calFilter);
+  if (!items.length) { el.innerHTML = '<div class="loading">No items found</div>'; return; }
+  el.innerHTML = items.map(i => {
+    const col = C[i.type] || C.event;
+    const shortDate = (i.date || 'TBA').replace(/\s\d{4}/, '').substring(0, 10);
+    return `<div class="ev-row">
+      <div class="ev-badge" style="background:${col.bg};color:${col.c}">${shortDate}</div>
+      <div style="flex:1">
+        <div class="ev-title">${i.title || ''}
+          <span class="ev-pill" style="background:${col.bg};color:${col.c}">${i.type || ''}</span>
+        </div>
+        <div class="ev-sub">${i.detail || ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function runMom() {
+  const q = document.getElementById('mom-input').value.trim();
+  if (!q) return;
+  const el = document.getElementById('mom-results');
+  el.innerHTML = '<div class="loading">Scanning media mentions for "' + q + '"...</div>';
+  try {
+    const raw = await claudeCall(`Search recent online articles and gaming news (last 30 days) about "${q}". Return ONLY a JSON object (no markdown, no explanation) with exactly these keys: {"score":0-100,"trend":"rising|stable|falling","summary":"2 sentences about media coverage","signals":[{"label":"Recent news volume","value":0-100},{"label":"Sentiment tone","value":0-100},{"label":"Social buzz","value":0-100},{"label":"Analyst mentions","value":0-100}],"headlines":[{"title":"actual headline text","source":"publication name","sentiment":"positive|neutral|negative"},{"title":"...","source":"...","sentiment":"..."},{"title":"...","source":"...","sentiment":"..."}]}`);
+    const d = parseJSON(raw);
+    if (!d || typeof d.score === 'undefined') throw new Error('Could not parse response');
+    const scoreCol = d.score > 65 ? '#0F6E56' : d.score > 35 ? '#854F0B' : '#A32D2D';
+    const trendStyle = d.trend === 'rising' ? 'background:#E1F5EE;color:#0F6E56' : d.trend === 'falling' ? 'background:#FCEBEB;color:#A32D2D' : 'background:#FAEEDA;color:#854F0B';
+    const trendLabel = d.trend === 'rising' ? '↑ Rising' : d.trend === 'falling' ? '↓ Falling' : '→ Stable';
+    el.innerHTML = `
+      <div class="score-block">
+        <div style="text-align:center">
+          <div class="score-num" style="color:${scoreCol}">${Math.round(d.score)}</div>
+          <div class="score-label">momentum score</div>
+        </div>
+        <div style="flex:1">
+          <div class="score-summary">${d.summary || ''}</div>
+          <span class="trend-pill" style="${trendStyle}">${trendLabel}</span>
+        </div>
+      </div>
+      ${(d.signals || []).map(s => {
+        const fill = s.value > 65 ? '#1D9E75' : s.value > 35 ? '#BA7517' : '#E24B4A';
+        return `<div class="bar-row"><span class="bar-label">${s.label}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.value)}%;background:${fill}"></div></div><span class="bar-val">${Math.round(s.value)}</span></div>`;
+      }).join('')}
+      <div class="sec-label">Recent headlines</div>
+      ${(d.headlines || []).map(h => {
+        const sc = h.sentiment === 'positive' ? 'background:#E1F5EE;color:#0F6E56' : h.sentiment === 'negative' ? 'background:#FCEBEB;color:#A32D2D' : 'background:#f1f0ea;color:#5f5e5a';
+        return `<div class="headline-card"><div class="headline-title">${h.title || ''}</div><div class="headline-meta">${h.source || ''} <span class="sent-pill" style="${sc}">${h.sentiment || ''}</span></div></div>`;
+      }).join('')}`;
+  } catch(e) {
+    el.innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+  }
+}
+
+async function loadReg() {
+  if (!API_KEY) return;
+  document.getElementById('reg-list').innerHTML = '<div class="loading">Searching regulatory databases...</div>';
+  try {
+    // Try to load from the scraped data file first
+    let scraped = [];
+    try {
+      const r = await fetch('./data/regulatory_filings.json');
+      if (r.ok) scraped = await r.json();
+    } catch {}
+
+    const raw = await claudeCall(`Search for recent (last 60 days) video game regulatory filings and ratings. Look for: new ESRB game ratings for unannounced or recently announced games, PEGI certifications, and USPTO trademark filings related to video game publishers or titles. Return ONLY a JSON array (no markdown) with up to 12 items: [{"title":"game or trademark name","publisher":"company","source":"ESRB|PEGI|USPTO","detail":"brief description","date":"approx date","significance":"high|medium|low"}]. Prioritize items from major publishers or unannounced titles that might signal upcoming releases.`);
+    const live = parseJSON(raw);
+    const liveArr = Array.isArray(live) ? live : [];
+
+    // Merge scraped + live, deduplicate by title
+    const seen = new Set();
+    regData = [...scraped.map(i => ({...i, _local: true})), ...liveArr].filter(i => {
+      const key = (i.title || '').toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    renderReg();
+  } catch(e) {
+    document.getElementById('reg-list').innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+  }
+}
+
+function renderReg() {
+  const el = document.getElementById('reg-list');
+  const items = regFilter === 'all' ? regData : regData.filter(i => i.source === regFilter);
+  if (!items.length) { el.innerHTML = '<div class="loading">No filings found</div>'; return; }
+  el.innerHTML = items.map(i => {
+    const col = C[i.source] || C.ESRB;
+    const sigColor = i.significance === 'high' ? '#E24B4A' : i.significance === 'medium' ? '#BA7517' : '#888780';
+    return `<div class="reg-row">
+      <span class="reg-src" style="background:${col.bg};color:${col.c}">${i.source || '?'}</span>
+      <div style="flex:1">
+        <div class="reg-title">
+          <span class="sig-dot" style="background:${sigColor}"></span>
+          ${i.title || 'Unknown'}
+          ${i.publisher ? `<span style="font-size:11px;font-weight:400;color:var(--text2)"> — ${i.publisher}</span>` : ''}
+          ${i._local ? '<span class="new-badge">scraped</span>' : ''}
+        </div>
+        <div class="reg-sub">${i.detail || ''}${i.date ? ` · ${i.date}` : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('mom-input').addEventListener('keydown', e => { if (e.key === 'Enter') runMom(); });
+
+init();
+</script>
+</body>
+</html>
