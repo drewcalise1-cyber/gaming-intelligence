@@ -5,77 +5,78 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Gaming Intelligence Dashboard</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #ececea;
-    --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
-    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1a; --bg2: #242422; --bg3: #2e2e2c;
-      --text: #e8e6de; --text2: #a8a69e; --text3: #6e6d68;
-      --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
-    }
-  }
-  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
-  .app { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
-  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
-  .subtitle { font-size: 12px; color: var(--text3); margin-bottom: 24px; }
-  .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 20px; }
-  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
-  .panel { display: none; } .panel.active { display: block; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-  .chip { font-size: 11px; padding: 3px 10px; border-radius: 20px; cursor: pointer; border: 0.5px solid var(--border2); background: none; color: var(--text2); }
-  .chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .note { font-size: 11px; color: var(--text3); font-style: italic; margin-bottom: 12px; }
-  .loading { font-size: 13px; color: var(--text3); padding: 20px 0; text-align: center; }
-  .error-msg { font-size: 12px; color: #a32d2d; background: #fcebeb; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
-  .ev-row { display: flex; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); align-items: flex-start; }
-  .ev-row:last-child { border: none; }
-  .ev-badge { min-width: 50px; max-width: 50px; text-align: center; padding: 3px 5px; border-radius: 8px; font-size: 10px; font-weight: 500; line-height: 1.3; }
-  .ev-title { font-size: 13px; font-weight: 500; }
-  .ev-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
-  .ev-pill { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 500; margin-left: 5px; vertical-align: middle; }
-  .msearch { display: flex; gap: 8px; margin-bottom: 14px; }
-  .msearch input { flex: 1; font-size: 13px; padding: 7px 10px; border: 0.5px solid var(--border2); border-radius: 8px; background: var(--bg); color: var(--text); }
-  .msearch button { font-size: 13px; padding: 7px 16px; border-radius: 8px; border: 0.5px solid var(--border2); background: var(--text); color: var(--bg); cursor: pointer; }
-  .score-block { display: flex; gap: 16px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 0.5px solid var(--border); align-items: center; }
-  .score-num { font-size: 40px; font-weight: 500; line-height: 1; }
-  .score-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .score-summary { font-size: 13px; flex: 1; }
-  .trend-pill { display: inline-block; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; margin-top: 6px; }
-  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-  .bar-label { font-size: 11px; color: var(--text2); min-width: 140px; }
-  .bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 3px; }
-  .bar-val { font-size: 11px; font-weight: 500; min-width: 24px; text-align: right; }
-  .sec-label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 8px; }
-  .headline-card { background: var(--bg2); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
-  .headline-title { font-size: 13px; font-weight: 500; }
-  .headline-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .sent-pill { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; margin-left: 5px; }
-  .reg-row { display: flex; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); align-items: flex-start; }
-  .reg-row:last-child { border: none; }
-  .reg-src { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; align-self: flex-start; }
-  .reg-title { font-size: 13px; font-weight: 500; }
-  .reg-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
-  .sig-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
-  .ticker-tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 4px; background: #E6F1FB; color: #185FA5; margin-left: 6px; vertical-align: middle; }
-  .scraped-badge { display: inline-block; font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 4px; background: #EAF3DE; color: #3B6D11; margin-left: 5px; vertical-align: middle; }
-  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .refresh-btn { font-size: 12px; padding: 4px 12px; border-radius: 8px; border: 0.5px solid var(--border2); background: none; color: var(--text2); cursor: pointer; }
-  .status-bar { font-size: 11px; color: var(--text3); padding: 8px 12px; background: var(--bg2); border-radius: 8px; margin-bottom: 16px; }
-  .status-bar span { color: #0F6E56; font-weight: 500; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#ffffff; --bg2:#f5f5f3; --bg3:#ececea;
+  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --border:rgba(0,0,0,0.10); --border2:rgba(0,0,0,0.18);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#1c1c1a;--bg2:#242422;--bg3:#2e2e2c;--text:#e8e6de;--text2:#a8a69e;--text3:#6e6d68;--border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.18);}
+}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
+.app{max-width:860px;margin:0 auto;padding:24px 16px 48px;}
+h1{font-size:20px;font-weight:500;margin-bottom:4px;}
+.subtitle{font-size:12px;color:var(--text3);margin-bottom:20px;}
+.status-bar{font-size:11px;padding:8px 12px;background:var(--bg2);border-radius:8px;margin-bottom:20px;border:0.5px solid var(--border);}
+.status-bar.ok{color:#0F6E56;border-color:#9FE1CB;}
+.status-bar.err{color:#A32D2D;border-color:#F7C1C1;}
+.tabs{display:flex;border-bottom:0.5px solid var(--border);margin-bottom:20px;}
+.tab{padding:8px 16px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-0.5px;}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.panel{display:none;}.panel.active{display:block;}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.chip{font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;border:0.5px solid var(--border2);background:none;color:var(--text2);}
+.chip.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+.note{font-size:11px;color:var(--text3);font-style:italic;margin-bottom:12px;}
+.loading{font-size:13px;color:var(--text3);padding:20px 0;text-align:center;}
+.error-msg{font-size:12px;color:#a32d2d;background:#fcebeb;border-radius:8px;padding:10px 14px;margin-bottom:12px;}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.refresh-btn{font-size:12px;padding:4px 12px;border-radius:8px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;}
+/* Calendar */
+.ev-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
+.ev-row:last-child{border:none;}
+.ev-badge{min-width:50px;max-width:50px;text-align:center;padding:3px 5px;border-radius:8px;font-size:10px;font-weight:500;line-height:1.3;}
+.ev-title{font-size:13px;font-weight:500;}
+.ev-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.ev-pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500;margin-left:5px;vertical-align:middle;}
+/* Momentum */
+.mom-controls{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+.mom-controls select{flex:1;font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text);cursor:pointer;}
+.mom-controls button{font-size:13px;padding:7px 16px;border-radius:8px;border:0.5px solid var(--border2);background:var(--text);color:var(--bg);cursor:pointer;white-space:nowrap;}
+.score-block{display:flex;gap:16px;padding-bottom:14px;margin-bottom:14px;border-bottom:0.5px solid var(--border);align-items:center;}
+.score-num{font-size:40px;font-weight:500;line-height:1;}
+.score-label{font-size:11px;color:var(--text3);margin-top:2px;}
+.score-summary{font-size:13px;flex:1;}
+.trend-pill{display:inline-block;font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;margin-top:6px;}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.bar-label{font-size:11px;color:var(--text2);min-width:140px;}
+.bar-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;}
+.bar-val{font-size:11px;font-weight:500;min-width:24px;text-align:right;}
+.sec-label{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;}
+.headline-card{background:var(--bg2);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.headline-title{font-size:13px;font-weight:500;}
+.headline-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.sent-pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;margin-left:5px;}
+.hl-search{font-size:11px;color:var(--text3);margin-left:8px;text-decoration:none;opacity:.7;}
+.hl-search:hover{opacity:1;text-decoration:underline;}
+/* Regulatory */
+.reg-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
+.reg-row:last-child{border:none;}
+.reg-src{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;align-self:flex-start;}
+.reg-title{font-size:13px;font-weight:500;}
+.reg-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.sig-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;}
+.ticker-tag{display:inline-block;font-size:10px;font-weight:500;padding:1px 6px;border-radius:4px;background:#E6F1FB;color:#185FA5;margin-left:6px;vertical-align:middle;}
+.scraped-badge{display:inline-block;font-size:9px;font-weight:500;padding:1px 5px;border-radius:4px;background:#EAF3DE;color:#3B6D11;margin-left:5px;vertical-align:middle;}
 </style>
 </head>
 <body>
 <div class="app">
   <h1>Gaming intelligence</h1>
   <p class="subtitle">Events calendar &nbsp;·&nbsp; Media momentum &nbsp;·&nbsp; Regulatory filings — publicly traded companies only</p>
-
-  <div class="status-bar" id="status-bar">Connecting to server...</div>
+  <div class="status-bar" id="status-bar">Connecting...</div>
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('cal',this)">Events &amp; releases</button>
@@ -83,6 +84,7 @@
     <button class="tab" onclick="switchTab('reg',this)">Filing monitor</button>
   </div>
 
+  <!-- CALENDAR -->
   <div class="panel active" id="panel-cal">
     <div class="panel-header">
       <div class="chip-row" id="cal-chips" style="margin:0">
@@ -93,19 +95,44 @@
       </div>
       <button class="refresh-btn" onclick="loadCal()">Refresh</button>
     </div>
-    <p class="note">Live web search — upcoming gaming events and confirmed release windows</p>
+    <p class="note">Live search across gaming events, Steam new releases, and confirmed storefront launch dates — publicly traded publishers only</p>
     <div id="cal-list"><div class="loading">Loading events...</div></div>
   </div>
 
+  <!-- MOMENTUM -->
   <div class="panel" id="panel-mom">
-    <p class="note">Search a publisher or title — Claude scans recent articles and scores media momentum live</p>
-    <div class="msearch">
-      <input type="text" id="mom-input" placeholder="e.g. Rockstar Games, Nintendo, Take-Two, Ubisoft..."/>
+    <p class="note">Select a publicly traded company — Claude scans recent articles and scores media momentum live. <a href="#" onclick="openMethodology()" style="color:inherit;opacity:.7">How is this score calculated? ↗</a></p>
+    <div class="mom-controls">
+      <select id="mom-select">
+        <optgroup label="US — NASDAQ / NYSE">
+          <option value="Microsoft Xbox">Microsoft / Xbox (MSFT)</option>
+          <option value="Sony PlayStation">Sony / PlayStation (SONY)</option>
+          <option value="Take-Two Interactive">Take-Two Interactive (TTWO)</option>
+          <option value="Electronic Arts">Electronic Arts (EA)</option>
+          <option value="Roblox">Roblox (RBLX)</option>
+        </optgroup>
+        <optgroup label="Europe">
+          <option value="Ubisoft">Ubisoft (UBI.PA)</option>
+          <option value="CD Projekt">CD Projekt (CDR.WA)</option>
+          <option value="Embracer Group">Embracer Group (EMBRAC-B.ST)</option>
+        </optgroup>
+        <optgroup label="Japan — TSE">
+          <option value="Nintendo">Nintendo (7974.T)</option>
+          <option value="Capcom">Capcom (9697.T)</option>
+          <option value="Konami">Konami (9766.T)</option>
+          <option value="Square Enix">Square Enix (9684.T)</option>
+          <option value="Sega Sammy">Sega Sammy (6460.T)</option>
+          <option value="Bandai Namco">Bandai Namco (7832.T)</option>
+          <option value="Koei Tecmo">Koei Tecmo (3635.T)</option>
+          <option value="Kadokawa FromSoftware">Kadokawa / FromSoftware (9468.T)</option>
+        </optgroup>
+      </select>
       <button onclick="runMom()">Scan</button>
     </div>
     <div id="mom-results"></div>
   </div>
 
+  <!-- REGULATORY -->
   <div class="panel" id="panel-reg">
     <div class="panel-header">
       <div class="chip-row" id="reg-chips" style="margin:0">
@@ -116,285 +143,239 @@
       </div>
       <button class="refresh-btn" onclick="loadReg()">Refresh</button>
     </div>
-    <p class="note">Live web search of regulatory databases — publicly traded companies only, with ticker shown on each entry</p>
+    <p class="note">Live search of regulatory databases — publicly traded companies only, ticker shown on each entry</p>
     <div id="reg-list"><div class="loading">Loading filings...</div></div>
   </div>
 </div>
 
 <script>
 const COL = {
-  event:   {bg:'#E6F1FB', c:'#185FA5'},
-  release: {bg:'#E1F5EE', c:'#0F6E56'},
-  hardware:{bg:'#FAEEDA', c:'#854F0B'},
-  ESRB:    {bg:'#FAECE7', c:'#993C1D'},
-  PEGI:    {bg:'#EEEDFE', c:'#534AB7'},
-  USPTO:   {bg:'#EAF3DE', c:'#3B6D11'},
+  event:   {bg:'#E6F1FB',c:'#185FA5'},
+  release: {bg:'#E1F5EE',c:'#0F6E56'},
+  hardware:{bg:'#FAEEDA',c:'#854F0B'},
+  ESRB:    {bg:'#FAECE7',c:'#993C1D'},
+  PEGI:    {bg:'#EEEDFE',c:'#534AB7'},
+  USPTO:   {bg:'#EAF3DE',c:'#3B6D11'},
 };
 
-let calData = [], regData = [], calFilter = 'all', regFilter = 'all';
+let calData=[], regData=[], calFilter='all', regFilter='all';
 
-// ── Core API call — goes to /api/proxy on your Vercel server, not Anthropic directly ──
-async function claudeCall(userPrompt) {
-  const response = await fetch('/api/proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1200,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: userPrompt }]
-    })
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Server error ${response.status}`);
-  }
-
-  const data = await response.json();
-  if (data.error) throw new Error(data.error.message || 'API error');
-  return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+function openMethodology(){
+  window.open('/momentum_methodology.pdf','_blank');
 }
 
-function parseJSON(raw) {
-  if (!raw) return null;
-  try { return JSON.parse(raw.trim()); } catch {}
-  const arr = raw.match(/\[[\s\S]*\]/);
-  if (arr) try { return JSON.parse(arr[0]); } catch {}
-  const obj = raw.match(/\{[\s\S]*\}/);
-  if (obj) try { return JSON.parse(obj[0]); } catch {}
+async function claudeCall(prompt){
+  const r = await fetch('/api/proxy',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:1500,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Server error ${r.status}`);}
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message||'API error');
+  return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+}
+
+function parseJSON(raw){
+  if(!raw) return null;
+  try{return JSON.parse(raw.trim());}catch{}
+  const a=raw.match(/\[[\s\S]*\]/); if(a) try{return JSON.parse(a[0]);}catch{}
+  const o=raw.match(/\{[\s\S]*\}/); if(o) try{return JSON.parse(o[0]);}catch{}
   return null;
 }
 
-function showError(elId, msg) {
-  document.getElementById(elId).innerHTML = `<div class="error-msg">${msg}</div>`;
+function err(id,msg){document.getElementById(id).innerHTML=`<div class="error-msg">${msg}</div>`;}
+function setStatus(msg,ok){
+  const el=document.getElementById('status-bar');
+  el.textContent=msg;
+  el.className='status-bar '+(ok?'ok':'err');
 }
 
-function setStatus(msg, ok) {
-  const el = document.getElementById('status-bar');
-  el.innerHTML = ok ? `<span>${msg}</span>` : msg;
-}
-
-// ── Check proxy is reachable on load ──
-async function checkProxy() {
-  try {
-    const r = await fetch('/api/proxy', { method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1,
-        messages:[{role:'user',content:'hi'}] })
-    });
-    const d = await r.json();
-    if (d.error && d.error.message.includes('API_KEY')) {
-      setStatus('Proxy reachable but ANTHROPIC_API_KEY not set in Vercel — see setup instructions', false);
+async function checkProxy(){
+  try{
+    const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1,messages:[{role:'user',content:'hi'}]})});
+    const d=await r.json();
+    if(d.error&&d.error.message.includes('API_KEY')){
+      setStatus('Proxy reachable but ANTHROPIC_API_KEY not set in Vercel — check environment variables',false);
     } else {
-      setStatus('Connected — live web search active', true);
-      loadCal();
-      loadReg();
+      setStatus('Connected — live web search active',true);
+      loadCal(); loadReg();
     }
-  } catch(e) {
-    setStatus('Cannot reach /api/proxy — ensure the api/proxy.js file is deployed on Vercel', false);
-  }
+  }catch(e){setStatus('Cannot reach /api/proxy — check that api/proxy.js is deployed',false);}
 }
 
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+function filterCal(f,btn){
+  calFilter=f;
+  document.querySelectorAll('#cal-chips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active'); renderCal();
+}
+function filterReg(f,btn){
+  regFilter=f;
+  document.querySelectorAll('#reg-chips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active'); renderReg();
 }
 
-function filterCal(f, btn) {
-  calFilter = f;
-  document.querySelectorAll('#cal-chips .chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  renderCal();
-}
-
-function filterReg(f, btn) {
-  regFilter = f;
-  document.querySelectorAll('#reg-chips .chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  renderReg();
-}
-
-async function loadCal() {
-  document.getElementById('cal-list').innerHTML = '<div class="loading">Searching for upcoming gaming events...</div>';
-  try {
-    const raw = await claudeCall(
-      'Search for upcoming video game industry events and confirmed major game releases in 2025-2026. ' +
-      'Return ONLY a JSON array (no markdown, no explanation) with up to 14 items. ' +
-      'Each item must have exactly these keys: ' +
-      '{"title":"...","date":"Mon DD YYYY or Q1 2026 etc","type":"event|release|hardware","detail":"one short sentence"}. ' +
-      'Include gaming conventions (Gamescom, Summer Game Fest, Nintendo Direct, Xbox showcase, State of Play), ' +
-      'major confirmed release dates, and hardware announcements. Sort by date ascending.'
+async function loadCal(){
+  document.getElementById('cal-list').innerHTML='<div class="loading">Searching events, storefronts and release dates...</div>';
+  try{
+    const raw=await claudeCall(
+      'Search for: (1) upcoming video game industry events and showcases in 2026 such as Summer Game Fest, Gamescom, Nintendo Direct, Xbox showcase, PlayStation State of Play, The Game Awards; '+
+      '(2) recently confirmed major game release dates on Steam, PlayStation Store, Xbox/Microsoft Store, Nintendo eShop from publishers including Nintendo, Sony, Microsoft/Xbox, Take-Two/Rockstar/2K, EA, Ubisoft, CD Projekt, Capcom, Konami, Square Enix, Sega, Bandai Namco; '+
+      '(3) upcoming hardware announcements from Sony, Microsoft, or Nintendo. '+
+      'Return ONLY a JSON array (no markdown) with up to 18 items. Each item: '+
+      '{"title":"...","date":"Mon DD YYYY or Q1 2026 etc","type":"event|release|hardware",'+
+      '"detail":"one sentence","publisher":"company name or empty","storefront":"Steam|PSN|Xbox|eShop|Multi|empty"}. '+
+      'Sort ascending by date.'
     );
-    const data = parseJSON(raw);
-    calData = Array.isArray(data) ? data : [];
-    if (!calData.length) throw new Error('No events returned — try refreshing');
+    const d=parseJSON(raw);
+    calData=Array.isArray(d)?d:[];
+    if(!calData.length) throw new Error('No results returned — try refreshing');
     renderCal();
-  } catch(e) {
-    showError('cal-list', 'Error: ' + e.message);
-  }
+  }catch(e){err('cal-list','Error: '+e.message);}
 }
 
-function renderCal() {
-  const el = document.getElementById('cal-list');
-  const items = calFilter === 'all' ? calData : calData.filter(i => i.type === calFilter);
-  if (!items.length) { el.innerHTML = '<div class="loading">No items found for this filter</div>'; return; }
-  el.innerHTML = items.map(i => {
-    const col = COL[i.type] || COL.event;
-    const shortDate = (i.date || 'TBA').replace(/\s\d{4}/, '').substring(0, 10);
+function renderCal(){
+  const el=document.getElementById('cal-list');
+  const items=calFilter==='all'?calData:calData.filter(i=>i.type===calFilter);
+  if(!items.length){el.innerHTML='<div class="loading">No items for this filter</div>';return;}
+  el.innerHTML=items.map(i=>{
+    const col=COL[i.type]||COL.event;
+    const d=(i.date||'TBA').replace(/\s\d{4}/,'').substring(0,10);
+    const sf=i.storefront?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${i.storefront}</span>`:'';
+    const pub=i.publisher?`<span style="font-size:11px;color:var(--text3)"> — ${i.publisher}</span>`:'';
     return `<div class="ev-row">
-      <div class="ev-badge" style="background:${col.bg};color:${col.c}">${shortDate}</div>
+      <div class="ev-badge" style="background:${col.bg};color:${col.c}">${d}</div>
       <div style="flex:1">
-        <div class="ev-title">${i.title || ''}
-          <span class="ev-pill" style="background:${col.bg};color:${col.c}">${i.type || ''}</span>
+        <div class="ev-title">${i.title||''}${pub}
+          <span class="ev-pill" style="background:${col.bg};color:${col.c}">${i.type||''}</span>${sf}
         </div>
-        <div class="ev-sub">${i.detail || ''}</div>
+        <div class="ev-sub">${i.detail||''}</div>
       </div>
     </div>`;
   }).join('');
 }
 
-async function runMom() {
-  const q = document.getElementById('mom-input').value.trim();
-  if (!q) return;
-  const el = document.getElementById('mom-results');
-  el.innerHTML = '<div class="loading">Scanning media mentions for "' + q + '"...</div>';
-  try {
-    const raw = await claudeCall(
-      `Search recent online articles and gaming news (last 30 days) about "${q}". ` +
-      'Return ONLY a JSON object (no markdown, no explanation) with exactly these keys: ' +
-      '{"score":0-100,"trend":"rising|stable|falling","summary":"2 sentences about media coverage",' +
-      '"signals":[{"label":"Recent news volume","value":0-100},{"label":"Sentiment tone","value":0-100},' +
-      '{"label":"Social buzz","value":0-100},{"label":"Analyst mentions","value":0-100}],' +
-      '"headlines":[{"title":"actual headline text","source":"publication name","sentiment":"positive|neutral|negative"},' +
-      '{"title":"...","source":"...","sentiment":"..."},{"title":"...","source":"...","sentiment":"..."}]}'
+async function runMom(){
+  const sel=document.getElementById('mom-select');
+  const q=sel.value;
+  const label=sel.options[sel.selectedIndex].text;
+  const el=document.getElementById('mom-results');
+  el.innerHTML=`<div class="loading">Scanning media mentions for ${label}...</div>`;
+  try{
+    const raw=await claudeCall(
+      `Search recent online articles, gaming news, financial media, and social platforms (last 30 days) about the video game company "${q}". `+
+      'Return ONLY a JSON object (no markdown) with exactly these keys: '+
+      '{"score":0-100,"trend":"rising|stable|falling","summary":"2 sentences about recent media coverage including approximate dates of key stories",'+
+      '"signals":[{"label":"Recent news volume","value":0-100},{"label":"Sentiment tone","value":0-100},'+
+      '{"label":"Social buzz","value":0-100},{"label":"Analyst mentions","value":0-100}],'+
+      '"headlines":[{"title":"exact headline text","source":"publication name","date":"approx date e.g. Jun 14 2026","url":"https://... or empty string"},'+
+      '{"title":"...","source":"...","date":"...","url":"..."},'+
+      '{"title":"...","source":"...","date":"...","url":"..."}]}'
     );
-    const d = parseJSON(raw);
-    if (!d || typeof d.score === 'undefined') throw new Error('Could not parse response — try again');
-    const scoreCol = d.score > 65 ? '#0F6E56' : d.score > 35 ? '#854F0B' : '#A32D2D';
-    const trendStyle = d.trend === 'rising'
-      ? 'background:#E1F5EE;color:#0F6E56'
-      : d.trend === 'falling'
-        ? 'background:#FCEBEB;color:#A32D2D'
-        : 'background:#FAEEDA;color:#854F0B';
-    const trendLabel = d.trend === 'rising' ? '↑ Rising' : d.trend === 'falling' ? '↓ Falling' : '→ Stable';
-    el.innerHTML = `
+    const d=parseJSON(raw);
+    if(!d||typeof d.score==='undefined') throw new Error('Could not parse response — try again');
+    const sc=d.score>65?'#0F6E56':d.score>35?'#854F0B':'#A32D2D';
+    const ts=d.trend==='rising'?'background:#E1F5EE;color:#0F6E56':d.trend==='falling'?'background:#FCEBEB;color:#A32D2D':'background:#FAEEDA;color:#854F0B';
+    const tl=d.trend==='rising'?'↑ Rising':d.trend==='falling'?'↓ Falling':'→ Stable';
+    el.innerHTML=`
       <div class="score-block">
         <div style="text-align:center">
-          <div class="score-num" style="color:${scoreCol}">${Math.round(d.score)}</div>
+          <div class="score-num" style="color:${sc}">${Math.round(d.score)}</div>
           <div class="score-label">momentum score</div>
         </div>
         <div style="flex:1">
-          <div class="score-summary">${d.summary || ''}</div>
-          <span class="trend-pill" style="${trendStyle}">${trendLabel}</span>
+          <div class="score-summary">${d.summary||''}</div>
+          <span class="trend-pill" style="${ts}">${tl}</span>
         </div>
       </div>
-      ${(d.signals || []).map(s => {
-        const fill = s.value > 65 ? '#1D9E75' : s.value > 35 ? '#BA7517' : '#E24B4A';
-        return `<div class="bar-row">
-          <span class="bar-label">${s.label}</span>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.value)}%;background:${fill}"></div></div>
-          <span class="bar-val">${Math.round(s.value)}</span>
-        </div>`;
+      ${(d.signals||[]).map(s=>{
+        const f=s.value>65?'#1D9E75':s.value>35?'#BA7517':'#E24B4A';
+        return `<div class="bar-row"><span class="bar-label">${s.label}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.value)}%;background:${f}"></div></div><span class="bar-val">${Math.round(s.value)}</span></div>`;
       }).join('')}
       <div class="sec-label">Recent headlines</div>
-      ${(d.headlines || []).map(h => {
-        const sc = h.sentiment === 'positive'
-          ? 'background:#E1F5EE;color:#0F6E56'
-          : h.sentiment === 'negative'
-            ? 'background:#FCEBEB;color:#A32D2D'
-            : 'background:#f1f0ea;color:#5f5e5a';
+      ${(d.headlines||[]).map(h=>{
+        const sp=h.sentiment==='positive'?'background:#E1F5EE;color:#0F6E56':h.sentiment==='negative'?'background:#FCEBEB;color:#A32D2D':'background:#f1f0ea;color:#5f5e5a';
+        const dateStr=h.date?`<span style="margin-left:6px;opacity:.6">${h.date}</span>`:'';
+        const searchQ=encodeURIComponent(`${h.title} ${h.source||''}`);
+        const searchLink=`<a class="hl-search" href="https://www.google.com/search?q=${searchQ}" target="_blank" rel="noopener">Search ↗</a>`;
         return `<div class="headline-card">
-          <div class="headline-title">${h.title || ''}</div>
-          <div class="headline-meta">${h.source || ''}
-            <span class="sent-pill" style="${sc}">${h.sentiment || ''}</span>
-          </div>
+          <div class="headline-title">${h.title||''}</div>
+          <div class="headline-meta">${h.source||''}${dateStr}${searchLink}${h.sentiment?`<span class="sent-pill" style="${sp}">${h.sentiment}</span>`:''}</div>
         </div>`;
       }).join('')}`;
-  } catch(e) {
-    showError('mom-results', 'Error: ' + e.message);
-  }
+  }catch(e){err('mom-results','Error: '+e.message);}
 }
 
-async function loadReg() {
-  document.getElementById('reg-list').innerHTML = '<div class="loading">Searching regulatory databases...</div>';
-  try {
-    let scraped = [];
-    try {
-      const r = await fetch('./data/regulatory_filings.json');
-      if (r.ok) scraped = await r.json();
-    } catch {}
+async function loadReg(){
+  document.getElementById('reg-list').innerHTML='<div class="loading">Searching regulatory databases...</div>';
+  try{
+    let scraped=[];
+    try{const r=await fetch('./data/regulatory_filings.json');if(r.ok)scraped=await r.json();}catch{}
 
-    const raw = await claudeCall(
-      'Search for recent (last 60 days) video game regulatory filings and ratings. ' +
-      'Look ONLY for filings from these publicly traded companies and their subsidiaries: ' +
-      'Nintendo, Sony/PlayStation/Naughty Dog/Insomniac/Guerrilla/Santa Monica/Bungie, ' +
-      'Microsoft/Xbox/Activision/Blizzard/Bethesda/id Software/Arkane/Obsidian/343 Industries, ' +
-      'Take-Two/Rockstar/2K/Zynga/Firaxis/Gearbox, Electronic Arts/EA/Respawn/BioWare/DICE, ' +
-      'Ubisoft, CD Projekt/CDPR, Embracer/THQ Nordic/Crystal Dynamics/Eidos, ' +
-      'Capcom, Konami, Square Enix, Sega/Atlus, Bandai Namco/FromSoftware, Koei Tecmo. ' +
-      'Return ONLY a JSON array (no markdown) with up to 12 items: ' +
-      '[{"title":"game or trademark name","publisher":"studio name","source":"ESRB|PEGI|USPTO",' +
-      '"detail":"brief description of filing","date":"approx date",' +
-      '"significance":"high|medium|low","ticker":"e.g. TTWO or 7974.T",' +
-      '"parent":"listed parent company e.g. Take-Two Interactive"}]. ' +
-      'If no matches found from those companies only, return [].'
+    const raw=await claudeCall(
+      'Search for recent (last 90 days) video game regulatory filings, ratings, and trademark applications. '+
+      'Search specifically for: '+
+      '(1) New ESRB ratings at esrb.org for games from Nintendo, Sony, Microsoft/Xbox/Activision/Bethesda, Take-Two/Rockstar/2K, EA/Respawn, Ubisoft, Capcom, Konami, Square Enix, Sega/Atlus, Bandai Namco; '+
+      '(2) New PEGI ratings from those same publishers; '+
+      '(3) USPTO trademark filings (Class 41 entertainment) from those publishers or their subsidiaries in 2025-2026; '+
+      '(4) Any news articles reporting on unannounced game ratings or trademark discoveries from those companies. '+
+      'Return ONLY a JSON array (no markdown). If you find results, include up to 12 items: '+
+      '[{"title":"game or trademark name","publisher":"studio","source":"ESRB|PEGI|USPTO",'+
+      '"detail":"description","date":"date","significance":"high|medium|low",'+
+      '"ticker":"e.g. TTWO","parent":"e.g. Take-Two Interactive","url":"source url or empty"}]. '+
+      'Return [] only if genuinely nothing found after searching.'
     );
 
-    const live = parseJSON(raw);
-    const liveArr = Array.isArray(live) ? live : [];
-
-    const seen = new Set();
-    regData = [
-      ...scraped.map(i => ({...i, _local: true})),
-      ...liveArr
-    ].filter(i => {
-      const key = (i.title || '').toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
+    const live=parseJSON(raw);
+    const liveArr=Array.isArray(live)?live:[];
+    const seen=new Set();
+    regData=[...scraped.map(i=>({...i,_local:true})),...liveArr].filter(i=>{
+      const k=(i.title||'').toLowerCase();
+      if(!k||seen.has(k))return false;
+      seen.add(k);return true;
     });
     renderReg();
-  } catch(e) {
-    showError('reg-list', 'Error: ' + e.message);
-  }
+  }catch(e){err('reg-list','Error: '+e.message);}
 }
 
-function renderReg() {
-  const el = document.getElementById('reg-list');
-  const items = regFilter === 'all' ? regData : regData.filter(i => i.source === regFilter);
-  if (!items.length) {
-    el.innerHTML = '<div class="loading">No filings found — try refreshing</div>';
-    return;
-  }
-  el.innerHTML = items.map(i => {
-    const col = COL[i.source] || COL.ESRB;
-    const sigColor = i.significance === 'high' ? '#E24B4A' : i.significance === 'medium' ? '#BA7517' : '#888780';
-    const ticker = i.ticker || i._ticker || '';
-    const parent = i.parent || i._parent || '';
+function renderReg(){
+  const el=document.getElementById('reg-list');
+  const items=regFilter==='all'?regData:regData.filter(i=>i.source===regFilter);
+  if(!items.length){el.innerHTML='<div class="loading">No filings found — try refreshing</div>';return;}
+  el.innerHTML=items.map(i=>{
+    const col=COL[i.source]||COL.ESRB;
+    const sc=i.significance==='high'?'#E24B4A':i.significance==='medium'?'#BA7517':'#888780';
+    const ticker=i.ticker||i._ticker||'';
+    const parent=i.parent||i._parent||'';
+    const srcLink=i.url?`<a href="${i.url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--text3);margin-left:6px;opacity:.7">Source ↗</a>`:'';
     return `<div class="reg-row">
-      <span class="reg-src" style="background:${col.bg};color:${col.c}">${i.source || '?'}</span>
+      <span class="reg-src" style="background:${col.bg};color:${col.c}">${i.source||'?'}</span>
       <div style="flex:1">
         <div class="reg-title">
-          <span class="sig-dot" style="background:${sigColor}"></span>
-          ${i.title || 'Unknown'}
-          ${ticker ? `<span class="ticker-tag">${ticker}</span>` : ''}
-          ${i._local ? '<span class="scraped-badge">scraped</span>' : ''}
+          <span class="sig-dot" style="background:${sc}"></span>${i.title||'Unknown'}
+          ${ticker?`<span class="ticker-tag">${ticker}</span>`:''}
+          ${i._local?'<span class="scraped-badge">scraped</span>':''}
         </div>
         <div class="reg-sub">
-          ${parent ? `<span style="color:var(--text3)">${parent}</span> · ` : ''}
-          ${i.detail || ''}${i.date ? ` · ${i.date}` : ''}
+          ${parent?`<span style="color:var(--text3)">${parent}</span> · `:''}
+          ${i.detail||''}${i.date?` · ${i.date}`:''}${srcLink}
         </div>
       </div>
     </div>`;
   }).join('');
 }
-
-document.getElementById('mom-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') runMom();
-});
 
 checkProxy();
 </script>
