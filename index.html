@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Gaming Intelligence Dashboard</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:#ffffff; --bg2:#f5f5f3; --bg3:#ececea;
-  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
-  --border:rgba(0,0,0,0.10); --border2:rgba(0,0,0,0.18);
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#ececea;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+  --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);
 }
-@media (prefers-color-scheme:dark){
+@media(prefers-color-scheme:dark){
   :root{--bg:#1c1c1a;--bg2:#242422;--bg3:#2e2e2c;--text:#e8e6de;--text2:#a8a69e;--text3:#6e6d68;--border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.18);}
 }
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
-.app{max-width:860px;margin:0 auto;padding:24px 16px 48px;}
+.app{max-width:900px;margin:0 auto;padding:24px 16px 48px;}
 h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .subtitle{font-size:12px;color:var(--text3);margin-bottom:20px;}
 .status-bar{font-size:11px;padding:8px 12px;background:var(--bg2);border-radius:8px;margin-bottom:20px;border:0.5px solid var(--border);}
@@ -36,10 +36,11 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 /* Calendar */
 .ev-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
 .ev-row:last-child{border:none;}
-.ev-badge{min-width:50px;max-width:50px;text-align:center;padding:3px 5px;border-radius:8px;font-size:10px;font-weight:500;line-height:1.3;}
+.ev-badge{min-width:56px;max-width:56px;text-align:center;padding:3px 4px;border-radius:8px;font-size:10px;font-weight:500;line-height:1.3;}
 .ev-title{font-size:13px;font-weight:500;}
 .ev-sub{font-size:11px;color:var(--text2);margin-top:1px;}
 .ev-pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500;margin-left:5px;vertical-align:middle;}
+.rating-pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:5px;vertical-align:middle;background:var(--bg3);color:var(--text2);}
 /* Momentum */
 .mom-controls{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
 .mom-controls select{flex:1;font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text);cursor:pointer;}
@@ -59,8 +60,6 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .headline-title{font-size:13px;font-weight:500;}
 .headline-meta{font-size:11px;color:var(--text3);margin-top:2px;}
 .sent-pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;margin-left:5px;}
-.hl-search{font-size:11px;color:var(--text3);margin-left:8px;text-decoration:none;opacity:.7;}
-.hl-search:hover{opacity:1;text-decoration:underline;}
 /* Regulatory */
 .reg-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
 .reg-row:last-child{border:none;}
@@ -69,13 +68,14 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .reg-sub{font-size:11px;color:var(--text2);margin-top:1px;}
 .sig-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;}
 .ticker-tag{display:inline-block;font-size:10px;font-weight:500;padding:1px 6px;border-radius:4px;background:#E6F1FB;color:#185FA5;margin-left:6px;vertical-align:middle;}
-.scraped-badge{display:inline-block;font-size:9px;font-weight:500;padding:1px 5px;border-radius:4px;background:#EAF3DE;color:#3B6D11;margin-left:5px;vertical-align:middle;}
+.rawg-badge{display:inline-block;font-size:9px;font-weight:500;padding:1px 5px;border-radius:4px;background:#EAF3DE;color:#3B6D11;margin-left:5px;vertical-align:middle;}
+.section-divider{font-size:11px;font-weight:500;color:var(--text3);padding:6px 0 4px;border-bottom:0.5px solid var(--border);margin-bottom:2px;letter-spacing:.04em;}
 </style>
 </head>
 <body>
 <div class="app">
   <h1>Gaming intelligence</h1>
-  <p class="subtitle">Events calendar &nbsp;·&nbsp; Media momentum &nbsp;·&nbsp; Regulatory filings — publicly traded companies only</p>
+  <p class="subtitle">Events &amp; releases &nbsp;·&nbsp; Media momentum &nbsp;·&nbsp; Regulatory filings — publicly traded companies only</p>
   <div class="status-bar" id="status-bar">Connecting...</div>
 
   <div class="tabs">
@@ -95,36 +95,38 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
       </div>
       <button class="refresh-btn" onclick="loadCal()">Refresh</button>
     </div>
-    <p class="note">Live search across gaming events, Steam new releases, and confirmed storefront launch dates — publicly traded publishers only</p>
-    <div id="cal-list"><div class="loading">Loading events...</div></div>
+    <p class="note">Gaming events via Claude live search · Game releases from RAWG database (500k+ titles) filtered to publicly traded publishers</p>
+    <div id="cal-list"><div class="loading">Loading...</div></div>
   </div>
 
   <!-- MOMENTUM -->
   <div class="panel" id="panel-mom">
-    <p class="note">Select a publicly traded company — Claude scans recent articles and scores media momentum live. <a href="#" onclick="openMethodology()" style="color:inherit;opacity:.7">How is this score calculated? ↗</a></p>
+    <p class="note">Select a publicly traded company — Claude scans recent articles and scores media momentum live.
+      <a href="/momentum_methodology.pdf" target="_blank" style="color:inherit;opacity:.7;margin-left:4px">How is this scored? ↗</a>
+    </p>
     <div class="mom-controls">
       <select id="mom-select">
         <optgroup label="US — NASDAQ / NYSE">
-          <option value="Microsoft Xbox">Microsoft / Xbox (MSFT)</option>
-          <option value="Sony PlayStation">Sony / PlayStation (SONY)</option>
-          <option value="Take-Two Interactive">Take-Two Interactive (TTWO)</option>
-          <option value="Electronic Arts">Electronic Arts (EA)</option>
-          <option value="Roblox">Roblox (RBLX)</option>
+          <option value="Microsoft Xbox gaming">Microsoft / Xbox (MSFT)</option>
+          <option value="Sony PlayStation gaming">Sony / PlayStation (SONY)</option>
+          <option value="Take-Two Interactive Rockstar">Take-Two Interactive (TTWO)</option>
+          <option value="Electronic Arts EA gaming">Electronic Arts (EA)</option>
+          <option value="Roblox gaming">Roblox (RBLX)</option>
         </optgroup>
         <optgroup label="Europe">
-          <option value="Ubisoft">Ubisoft (UBI.PA)</option>
-          <option value="CD Projekt">CD Projekt (CDR.WA)</option>
-          <option value="Embracer Group">Embracer Group (EMBRAC-B.ST)</option>
+          <option value="Ubisoft gaming">Ubisoft (UBI.PA)</option>
+          <option value="CD Projekt CDPR">CD Projekt (CDR.WA)</option>
+          <option value="Embracer Group THQ Nordic">Embracer Group (EMBRAC-B.ST)</option>
         </optgroup>
         <optgroup label="Japan — TSE">
-          <option value="Nintendo">Nintendo (7974.T)</option>
-          <option value="Capcom">Capcom (9697.T)</option>
-          <option value="Konami">Konami (9766.T)</option>
-          <option value="Square Enix">Square Enix (9684.T)</option>
-          <option value="Sega Sammy">Sega Sammy (6460.T)</option>
-          <option value="Bandai Namco">Bandai Namco (7832.T)</option>
-          <option value="Koei Tecmo">Koei Tecmo (3635.T)</option>
-          <option value="Kadokawa FromSoftware">Kadokawa / FromSoftware (9468.T)</option>
+          <option value="Nintendo Switch gaming">Nintendo (7974.T)</option>
+          <option value="Capcom gaming">Capcom (9697.T)</option>
+          <option value="Konami gaming">Konami (9766.T)</option>
+          <option value="Square Enix gaming">Square Enix (9684.T)</option>
+          <option value="Sega Sammy gaming">Sega Sammy (6460.T)</option>
+          <option value="Bandai Namco gaming">Bandai Namco (7832.T)</option>
+          <option value="Koei Tecmo gaming">Koei Tecmo (3635.T)</option>
+          <option value="Kadokawa FromSoftware gaming">Kadokawa / FromSoftware (9468.T)</option>
         </optgroup>
       </select>
       <button onclick="runMom()">Scan</button>
@@ -132,24 +134,125 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
     <div id="mom-results"></div>
   </div>
 
-  <!-- REGULATORY -->
+  <!-- REGULATORY / FILING MONITOR -->
   <div class="panel" id="panel-reg">
     <div class="panel-header">
       <div class="chip-row" id="reg-chips" style="margin:0">
-        <button class="chip active" onclick="filterReg('all',this)">All sources</button>
-        <button class="chip" onclick="filterReg('ESRB',this)">ESRB</button>
-        <button class="chip" onclick="filterReg('PEGI',this)">PEGI</button>
+        <button class="chip active" onclick="filterReg('all',this)">All</button>
+        <button class="chip" onclick="filterReg('ESRB',this)">ESRB (RAWG)</button>
+        <button class="chip" onclick="filterReg('PEGI',this)">PEGI (RAWG)</button>
         <button class="chip" onclick="filterReg('USPTO',this)">USPTO</button>
       </div>
       <button class="refresh-btn" onclick="loadReg()">Refresh</button>
     </div>
-    <p class="note">Live search of regulatory databases — publicly traded companies only, ticker shown on each entry</p>
-    <div id="reg-list"><div class="loading">Loading filings...</div></div>
+    <p class="note">ESRB &amp; PEGI ratings from RAWG database (real historical data) · USPTO trademark filings via Claude live search · Publicly traded companies only</p>
+    <div id="reg-list"><div class="loading">Loading...</div></div>
   </div>
 </div>
 
 <script>
-const COL = {
+// ── Ticker map (publisher name → ticker) ────────────────────────────────────
+const TICKER = {
+  'nintendo':{'t':'7974.T','p':'Nintendo'},
+  'sony':{'t':'SONY','p':'Sony Group'},
+  'sony interactive entertainment':{'t':'SONY','p':'Sony Group'},
+  'naughty dog':{'t':'SONY','p':'Sony Group'},
+  'insomniac games':{'t':'SONY','p':'Sony Group'},
+  'insomniac':{'t':'SONY','p':'Sony Group'},
+  'guerrilla games':{'t':'SONY','p':'Sony Group'},
+  'santa monica studio':{'t':'SONY','p':'Sony Group'},
+  'sucker punch':{'t':'SONY','p':'Sony Group'},
+  'bungie':{'t':'SONY','p':'Sony Group'},
+  'housemarque':{'t':'SONY','p':'Sony Group'},
+  'polyphony digital':{'t':'SONY','p':'Sony Group'},
+  'microsoft':{'t':'MSFT','p':'Microsoft'},
+  'xbox game studios':{'t':'MSFT','p':'Microsoft'},
+  'bethesda softworks':{'t':'MSFT','p':'Microsoft'},
+  'bethesda game studios':{'t':'MSFT','p':'Microsoft'},
+  'id software':{'t':'MSFT','p':'Microsoft'},
+  'arkane studios':{'t':'MSFT','p':'Microsoft'},
+  'obsidian entertainment':{'t':'MSFT','p':'Microsoft'},
+  'playground games':{'t':'MSFT','p':'Microsoft'},
+  'turn 10 studios':{'t':'MSFT','p':'Microsoft'},
+  'rare':{'t':'MSFT','p':'Microsoft'},
+  '343 industries':{'t':'MSFT','p':'Microsoft'},
+  'the coalition':{'t':'MSFT','p':'Microsoft'},
+  'activision':{'t':'MSFT','p':'Microsoft'},
+  'blizzard entertainment':{'t':'MSFT','p':'Microsoft'},
+  'king':{'t':'MSFT','p':'Microsoft'},
+  'take-two interactive':{'t':'TTWO','p':'Take-Two Interactive'},
+  'rockstar games':{'t':'TTWO','p':'Take-Two Interactive'},
+  '2k':{'t':'TTWO','p':'Take-Two Interactive'},
+  'zynga':{'t':'TTWO','p':'Take-Two Interactive'},
+  'firaxis games':{'t':'TTWO','p':'Take-Two Interactive'},
+  'gearbox software':{'t':'TTWO','p':'Take-Two Interactive'},
+  'ghost story games':{'t':'TTWO','p':'Take-Two Interactive'},
+  'hangar 13':{'t':'TTWO','p':'Take-Two Interactive'},
+  'electronic arts':{'t':'EA','p':'Electronic Arts'},
+  'ea sports':{'t':'EA','p':'Electronic Arts'},
+  'respawn entertainment':{'t':'EA','p':'Electronic Arts'},
+  'bioware':{'t':'EA','p':'Electronic Arts'},
+  'ea dice':{'t':'EA','p':'Electronic Arts'},
+  'maxis':{'t':'EA','p':'Electronic Arts'},
+  'criterion games':{'t':'EA','p':'Electronic Arts'},
+  'codemasters':{'t':'EA','p':'Electronic Arts'},
+  'ubisoft':{'t':'UBI.PA','p':'Ubisoft'},
+  'ubisoft montreal':{'t':'UBI.PA','p':'Ubisoft'},
+  'cd projekt':{'t':'CDR.WA','p':'CD Projekt'},
+  'cd projekt red':{'t':'CDR.WA','p':'CD Projekt'},
+  'capcom':{'t':'9697.T','p':'Capcom'},
+  'konami':{'t':'9766.T','p':'Konami'},
+  'konami digital entertainment':{'t':'9766.T','p':'Konami'},
+  'square enix':{'t':'9684.T','p':'Square Enix'},
+  'sega':{'t':'6460.T','p':'Sega Sammy'},
+  'atlus':{'t':'6460.T','p':'Sega Sammy'},
+  'creative assembly':{'t':'6460.T','p':'Sega Sammy'},
+  'sports interactive':{'t':'6460.T','p':'Sega Sammy'},
+  'bandai namco':{'t':'7832.T','p':'Bandai Namco'},
+  'bandai namco entertainment':{'t':'7832.T','p':'Bandai Namco'},
+  'from software':{'t':'9468.T','p':'Kadokawa'},
+  'fromsoftware':{'t':'9468.T','p':'Kadokawa'},
+  'koei tecmo':{'t':'3635.T','p':'Koei Tecmo'},
+  'team ninja':{'t':'3635.T','p':'Koei Tecmo'},
+  'embracer group':{'t':'EMBRAC-B.ST','p':'Embracer Group'},
+  'thq nordic':{'t':'EMBRAC-B.ST','p':'Embracer Group'},
+  'crystal dynamics':{'t':'EMBRAC-B.ST','p':'Embracer Group'},
+  'eidos-montreal':{'t':'EMBRAC-B.ST','p':'Embracer Group'},
+  'roblox':{'t':'RBLX','p':'Roblox Corp'},
+};
+
+function resolveTicker(name){
+  if(!name) return null;
+  const k=name.toLowerCase().trim();
+  if(TICKER[k]) return TICKER[k];
+  for(const [kw,v] of Object.entries(TICKER)){if(k.includes(kw)) return v;}
+  return null;
+}
+
+// ── RAWG publisher IDs (stable numeric IDs for direct API queries) ───────────
+// These are RAWG's internal publisher IDs — verified against their API.
+const RAWG_PUBLISHERS = [
+  {id:339,  name:'Nintendo',          ticker:'7974.T', parent:'Nintendo'},
+  {id:308,  name:'Sony',              ticker:'SONY',   parent:'Sony Group'},
+  {id:3498, name:'Microsoft',         ticker:'MSFT',   parent:'Microsoft'},
+  {id:3761, name:'Xbox Game Studios', ticker:'MSFT',   parent:'Microsoft'},
+  {id:3713, name:'Rockstar Games',    ticker:'TTWO',   parent:'Take-Two Interactive'},
+  {id:3686, name:'2K',                ticker:'TTWO',   parent:'Take-Two Interactive'},
+  {id:3756, name:'Zynga',             ticker:'TTWO',   parent:'Take-Two Interactive'},
+  {id:3680, name:'Electronic Arts',   ticker:'EA',     parent:'Electronic Arts'},
+  {id:354,  name:'Ubisoft',           ticker:'UBI.PA', parent:'Ubisoft'},
+  {id:9440, name:'CD Projekt',        ticker:'CDR.WA', parent:'CD Projekt'},
+  {id:5440, name:'Capcom',            ticker:'9697.T', parent:'Capcom'},
+  {id:1291, name:'Konami',            ticker:'9766.T', parent:'Konami'},
+  {id:3644, name:'Square Enix',       ticker:'9684.T', parent:'Square Enix'},
+  {id:3577, name:'Sega',              ticker:'6460.T', parent:'Sega Sammy'},
+  {id:8875, name:'Atlus',             ticker:'6460.T', parent:'Sega Sammy'},
+  {id:3626, name:'Bandai Namco',      ticker:'7832.T', parent:'Bandai Namco'},
+  {id:6,    name:'FromSoftware',      ticker:'9468.T', parent:'Kadokawa'},
+  {id:3798, name:'Koei Tecmo',        ticker:'3635.T', parent:'Koei Tecmo'},
+];
+
+const COL={
   event:   {bg:'#E6F1FB',c:'#185FA5'},
   release: {bg:'#E1F5EE',c:'#0F6E56'},
   hardware:{bg:'#FAEEDA',c:'#854F0B'},
@@ -160,113 +263,176 @@ const COL = {
 
 let calData=[], regData=[], calFilter='all', regFilter='all';
 
-function openMethodology(){
-  window.open('/momentum_methodology.pdf','_blank');
+// ── Proxy calls ──────────────────────────────────────────────────────────────
+async function claudeCall(prompt){
+  const r=await fetch('/api/proxy',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:prompt}]})});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Error ${r.status}`);}
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
 }
 
-async function claudeCall(prompt){
-  const r = await fetch('/api/proxy',{
-    method:'POST',
+async function rawgCall(endpoint, params){
+  const r=await fetch('/api/proxy',{method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      model:'claude-sonnet-4-6',
-      max_tokens:1500,
-      tools:[{type:'web_search_20250305',name:'web_search'}],
-      messages:[{role:'user',content:prompt}]
-    })
-  });
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Server error ${r.status}`);}
-  const d=await r.json();
-  if(d.error) throw new Error(d.error.message||'API error');
-  return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    body:JSON.stringify({target:'rawg',endpoint,params})});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`RAWG error ${r.status}`);}
+  return r.json();
 }
 
 function parseJSON(raw){
   if(!raw) return null;
   try{return JSON.parse(raw.trim());}catch{}
-  const a=raw.match(/\[[\s\S]*\]/); if(a) try{return JSON.parse(a[0]);}catch{}
-  const o=raw.match(/\{[\s\S]*\}/); if(o) try{return JSON.parse(o[0]);}catch{}
+  const a=raw.match(/\[[\s\S]*\]/);if(a)try{return JSON.parse(a[0]);}catch{}
+  const o=raw.match(/\{[\s\S]*\}/);if(o)try{return JSON.parse(o[0]);}catch{}
   return null;
 }
+function errEl(id,msg){document.getElementById(id).innerHTML=`<div class="error-msg">${msg}</div>`;}
+function setStatus(msg,ok){const el=document.getElementById('status-bar');el.textContent=msg;el.className='status-bar '+(ok?'ok':'err');}
 
-function err(id,msg){document.getElementById(id).innerHTML=`<div class="error-msg">${msg}</div>`;}
-function setStatus(msg,ok){
-  const el=document.getElementById('status-bar');
-  el.textContent=msg;
-  el.className='status-bar '+(ok?'ok':'err');
-}
-
+// ── Startup check ────────────────────────────────────────────────────────────
 async function checkProxy(){
   try{
     const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1,messages:[{role:'user',content:'hi'}]})});
     const d=await r.json();
     if(d.error&&d.error.message.includes('API_KEY')){
-      setStatus('Proxy reachable but ANTHROPIC_API_KEY not set in Vercel — check environment variables',false);
+      setStatus('Proxy reachable — ANTHROPIC_API_KEY missing in Vercel environment variables',false);
     } else {
-      setStatus('Connected — live web search active',true);
+      setStatus('Connected — Claude live search + RAWG database active',true);
       loadCal(); loadReg();
     }
-  }catch(e){setStatus('Cannot reach /api/proxy — check that api/proxy.js is deployed',false);}
+  }catch(e){setStatus('Cannot reach /api/proxy — check api/proxy.js is deployed',false);}
 }
 
-function switchTab(name,btn){
+function switchTab(n,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('panel-'+name).classList.add('active');
+  btn.classList.add('active');document.getElementById('panel-'+n).classList.add('active');
 }
-function filterCal(f,btn){
-  calFilter=f;
-  document.querySelectorAll('#cal-chips .chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active'); renderCal();
-}
-function filterReg(f,btn){
-  regFilter=f;
-  document.querySelectorAll('#reg-chips .chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active'); renderReg();
-}
+function filterCal(f,btn){calFilter=f;document.querySelectorAll('#cal-chips .chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');renderCal();}
+function filterReg(f,btn){regFilter=f;document.querySelectorAll('#reg-chips .chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');renderReg();}
 
+// ── CALENDAR ─────────────────────────────────────────────────────────────────
+// Step 1: Claude search for events & hardware
+// Step 2: RAWG query for releases from each major publisher (parallel)
 async function loadCal(){
-  document.getElementById('cal-list').innerHTML='<div class="loading">Searching events, storefronts and release dates...</div>';
+  document.getElementById('cal-list').innerHTML='<div class="loading">Loading events and release dates from RAWG...</div>';
   try{
-    const raw=await claudeCall(
-      'Search for: (1) upcoming video game industry events and showcases in 2026 such as Summer Game Fest, Gamescom, Nintendo Direct, Xbox showcase, PlayStation State of Play, The Game Awards; '+
-      '(2) recently confirmed major game release dates on Steam, PlayStation Store, Xbox/Microsoft Store, Nintendo eShop from publishers including Nintendo, Sony, Microsoft/Xbox, Take-Two/Rockstar/2K, EA, Ubisoft, CD Projekt, Capcom, Konami, Square Enix, Sega, Bandai Namco; '+
-      '(3) upcoming hardware announcements from Sony, Microsoft, or Nintendo. '+
-      'Return ONLY a JSON array (no markdown) with up to 18 items. Each item: '+
-      '{"title":"...","date":"Mon DD YYYY or Q1 2026 etc","type":"event|release|hardware",'+
-      '"detail":"one sentence","publisher":"company name or empty","storefront":"Steam|PSN|Xbox|eShop|Multi|empty"}. '+
-      'Sort ascending by date.'
+    // Events + hardware from Claude
+    const evPromise = claudeCall(
+      'Search for upcoming video game industry events and hardware announcements in 2026. Include: '+
+      'Summer Game Fest, Gamescom, Nintendo Direct, Xbox showcase, PlayStation State of Play, The Game Awards, '+
+      'and any confirmed hardware from Sony/Microsoft/Nintendo. '+
+      'Return ONLY a JSON array (no markdown) — each item: '+
+      '{"title":"...","date":"Mon DD YYYY","type":"event|hardware","detail":"one sentence","publisher":"company or empty"}'
     );
-    const d=parseJSON(raw);
-    calData=Array.isArray(d)?d:[];
-    if(!calData.length) throw new Error('No results returned — try refreshing');
+
+    // RAWG releases: query for 2025-2026 games, sorted by release date, for our publishers
+    // We query by date range and filter client-side by publisher
+    const rawgPromise = rawgCall('games', {
+      dates: '2025-01-01,2026-12-31',
+      ordering: '-added',
+      page_size: 40,
+      publishers: RAWG_PUBLISHERS.map(p=>p.id).join(','),
+    });
+
+    const [evRaw, rawgData] = await Promise.all([evPromise, rawgPromise]);
+
+    // Parse events
+    const events = (parseJSON(evRaw)||[]).map(e=>({...e,_source:'claude'}));
+
+    // Parse RAWG releases
+    const releases = [];
+    if(rawgData && rawgData.results){
+      for(const g of rawgData.results){
+        if(!g.released) continue;
+        // Find which of our publishers this belongs to
+        const pub = (g.publishers||[]).find(p=>RAWG_PUBLISHERS.find(rp=>rp.id===p.id));
+        const rp = pub ? RAWG_PUBLISHERS.find(r=>r.id===pub.id) : null;
+        // Also try name matching if ID not found
+        const resolvedByName = !rp && (g.publishers||[]).map(p=>resolveTicker(p.name)).find(Boolean);
+        const ticker = rp ? rp.ticker : (resolvedByName ? resolvedByName.t : null);
+        const parent = rp ? rp.parent : (resolvedByName ? resolvedByName.p : null);
+        if(!ticker) continue; // skip non-tradeable
+
+        const esrb = g.esrb_rating ? g.esrb_rating.name : '';
+        const pubName = pub ? pub.name : (g.publishers||[])[0]?.name || '';
+        const d = new Date(g.released);
+        const dateStr = d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+        releases.push({
+          title: g.name,
+          date: dateStr,
+          type: 'release',
+          detail: [g.genres?.slice(0,2).map(x=>x.name).join(', '), esrb ? `Rated ${esrb}` : ''].filter(Boolean).join(' · '),
+          publisher: pubName,
+          parent,
+          ticker,
+          esrb,
+          _source: 'rawg',
+          _rawgUrl: `https://rawg.io/games/${g.slug}`,
+          _metacritic: g.metacritic,
+        });
+      }
+    }
+
+    // Merge and sort
+    calData = [...events, ...releases].sort((a,b)=>{
+      const da=new Date(a.date)||0, db=new Date(b.date)||0;
+      return da-db;
+    });
+
+    if(!calData.length) throw new Error('No results — try refreshing');
     renderCal();
-  }catch(e){err('cal-list','Error: '+e.message);}
+  }catch(e){errEl('cal-list','Error: '+e.message);}
 }
 
 function renderCal(){
   const el=document.getElementById('cal-list');
   const items=calFilter==='all'?calData:calData.filter(i=>i.type===calFilter);
   if(!items.length){el.innerHTML='<div class="loading">No items for this filter</div>';return;}
-  el.innerHTML=items.map(i=>{
-    const col=COL[i.type]||COL.event;
-    const d=(i.date||'TBA').replace(/\s\d{4}/,'').substring(0,10);
-    const sf=i.storefront?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${i.storefront}</span>`:'';
-    const pub=i.publisher?`<span style="font-size:11px;color:var(--text3)"> — ${i.publisher}</span>`:'';
-    return `<div class="ev-row">
-      <div class="ev-badge" style="background:${col.bg};color:${col.c}">${d}</div>
-      <div style="flex:1">
-        <div class="ev-title">${i.title||''}${pub}
-          <span class="ev-pill" style="background:${col.bg};color:${col.c}">${i.type||''}</span>${sf}
-        </div>
-        <div class="ev-sub">${i.detail||''}</div>
-      </div>
-    </div>`;
-  }).join('');
+
+  // Group by source
+  const rawgItems = items.filter(i=>i._source==='rawg');
+  const claudeItems = items.filter(i=>i._source==='claude');
+
+  let html='';
+  if(claudeItems.length){
+    html+=`<div class="section-divider">EVENTS &amp; HARDWARE — via Claude live search</div>`;
+    html+=claudeItems.map(i=>renderCalRow(i)).join('');
+  }
+  if(rawgItems.length){
+    html+=`<div class="section-divider" style="margin-top:16px">CONFIRMED RELEASES — from RAWG database · data by <a href="https://rawg.io" target="_blank" style="color:inherit">RAWG</a></div>`;
+    html+=rawgItems.map(i=>renderCalRow(i)).join('');
+  }
+  el.innerHTML=html;
 }
 
+function renderCalRow(i){
+  const col=COL[i.type]||COL.event;
+  const d=(i.date||'TBA').substring(0,10);
+  const ticker=i.ticker?`<span class="ticker-tag">${i.ticker}</span>`:'';
+  const mc=i._metacritic?`<span style="font-size:10px;color:var(--text3);margin-left:6px">MC ${i._metacritic}</span>`:'';
+  const esrb=i.esrb?`<span class="rating-pill">${i.esrb}</span>`:'';
+  const src=i._rawgUrl?`<a href="${i._rawgUrl}" target="_blank" rel="noopener" style="font-size:10px;color:var(--text3);margin-left:6px;opacity:.7">RAWG ↗</a>`:'';
+  const pub=i.publisher?`<span style="font-size:11px;color:var(--text3)"> — ${i.publisher}</span>`:'';
+  return `<div class="ev-row">
+    <div class="ev-badge" style="background:${col.bg};color:${col.c}">${d}</div>
+    <div style="flex:1">
+      <div class="ev-title">${i.title||''}${pub}
+        <span class="ev-pill" style="background:${col.bg};color:${col.c}">${i.type}</span>
+        ${ticker}${esrb}${mc}${src}
+      </div>
+      <div class="ev-sub">${i.detail||''}</div>
+    </div>
+  </div>`;
+}
+
+// ── MEDIA MOMENTUM ───────────────────────────────────────────────────────────
 async function runMom(){
   const sel=document.getElementById('mom-select');
   const q=sel.value;
@@ -275,17 +441,17 @@ async function runMom(){
   el.innerHTML=`<div class="loading">Scanning media mentions for ${label}...</div>`;
   try{
     const raw=await claudeCall(
-      `Search recent online articles, gaming news, financial media, and social platforms (last 30 days) about the video game company "${q}". `+
-      'Return ONLY a JSON object (no markdown) with exactly these keys: '+
-      '{"score":0-100,"trend":"rising|stable|falling","summary":"2 sentences about recent media coverage including approximate dates of key stories",'+
+      `Search recent online articles, gaming news, and financial media (last 30 days) about the video game company "${q}". `+
+      'Return ONLY a JSON object (no markdown) with: '+
+      '{"score":0-100,"trend":"rising|stable|falling",'+
+      '"summary":"2 sentences including approximate dates of key stories",'+
       '"signals":[{"label":"Recent news volume","value":0-100},{"label":"Sentiment tone","value":0-100},'+
       '{"label":"Social buzz","value":0-100},{"label":"Analyst mentions","value":0-100}],'+
-      '"headlines":[{"title":"exact headline text","source":"publication name","date":"approx date e.g. Jun 14 2026","url":"https://... or empty string"},'+
-      '{"title":"...","source":"...","date":"...","url":"..."},'+
-      '{"title":"...","source":"...","date":"...","url":"..."}]}'
+      '"headlines":[{"title":"exact headline","source":"publication","date":"e.g. Jun 14 2026","url":"https://... or empty"},'+
+      '{"title":"...","source":"...","date":"...","url":"..."},{"title":"...","source":"...","date":"...","url":"..."}]}'
     );
     const d=parseJSON(raw);
-    if(!d||typeof d.score==='undefined') throw new Error('Could not parse response — try again');
+    if(!d||typeof d.score==='undefined') throw new Error('Could not parse — try again');
     const sc=d.score>65?'#0F6E56':d.score>35?'#854F0B':'#A32D2D';
     const ts=d.trend==='rising'?'background:#E1F5EE;color:#0F6E56':d.trend==='falling'?'background:#FCEBEB;color:#A32D2D':'background:#FAEEDA;color:#854F0B';
     const tl=d.trend==='rising'?'↑ Rising':d.trend==='falling'?'↓ Falling':'→ Stable';
@@ -300,81 +466,138 @@ async function runMom(){
           <span class="trend-pill" style="${ts}">${tl}</span>
         </div>
       </div>
-      ${(d.signals||[]).map(s=>{
-        const f=s.value>65?'#1D9E75':s.value>35?'#BA7517':'#E24B4A';
+      ${(d.signals||[]).map(s=>{const f=s.value>65?'#1D9E75':s.value>35?'#BA7517':'#E24B4A';
         return `<div class="bar-row"><span class="bar-label">${s.label}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.value)}%;background:${f}"></div></div><span class="bar-val">${Math.round(s.value)}</span></div>`;
       }).join('')}
       <div class="sec-label">Recent headlines</div>
       ${(d.headlines||[]).map(h=>{
         const sp=h.sentiment==='positive'?'background:#E1F5EE;color:#0F6E56':h.sentiment==='negative'?'background:#FCEBEB;color:#A32D2D':'background:#f1f0ea;color:#5f5e5a';
-        const dateStr=h.date?`<span style="margin-left:6px;opacity:.6">${h.date}</span>`:'';
-        const searchQ=encodeURIComponent(`${h.title} ${h.source||''}`);
-        const searchLink=`<a class="hl-search" href="https://www.google.com/search?q=${searchQ}" target="_blank" rel="noopener">Search ↗</a>`;
+        const dateStr=h.date?`<span style="margin-left:6px;opacity:.65">${h.date}</span>`:'';
+        const link=h.url&&h.url.startsWith('http')
+          ?`<a href="${h.url}" target="_blank" rel="noopener" style="font-size:11px;color:var(--text3);margin-left:8px;opacity:.7">Read ↗</a>`
+          :`<a class="hl-search" href="https://www.google.com/search?q=${encodeURIComponent(h.title+' '+h.source)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--text3);margin-left:8px;opacity:.7">Search ↗</a>`;
         return `<div class="headline-card">
           <div class="headline-title">${h.title||''}</div>
-          <div class="headline-meta">${h.source||''}${dateStr}${searchLink}${h.sentiment?`<span class="sent-pill" style="${sp}">${h.sentiment}</span>`:''}</div>
+          <div class="headline-meta">${h.source||''}${dateStr}${link}${h.sentiment?`<span class="sent-pill" style="${sp}">${h.sentiment}</span>`:''}</div>
         </div>`;
       }).join('')}`;
-  }catch(e){err('mom-results','Error: '+e.message);}
+  }catch(e){errEl('mom-results','Error: '+e.message);}
 }
 
+// ── FILING MONITOR ───────────────────────────────────────────────────────────
+// ESRB + PEGI ratings from RAWG (real data), USPTO from Claude search
 async function loadReg(){
-  document.getElementById('reg-list').innerHTML='<div class="loading">Searching regulatory databases...</div>';
+  document.getElementById('reg-list').innerHTML='<div class="loading">Loading ESRB/PEGI ratings from RAWG and USPTO filings from Claude...</div>';
   try{
-    let scraped=[];
-    try{const r=await fetch('./data/regulatory_filings.json');if(r.ok)scraped=await r.json();}catch{}
+    // RAWG: recent games with ESRB ratings from our publishers
+    const rawgPromise = rawgCall('games',{
+      dates:'2024-01-01,2026-12-31',
+      ordering:'-released',
+      page_size:40,
+      publishers: RAWG_PUBLISHERS.map(p=>p.id).join(','),
+    });
 
-    const raw=await claudeCall(
-      'Search for recent (last 90 days) video game regulatory filings, ratings, and trademark applications. '+
-      'Search specifically for: '+
-      '(1) New ESRB ratings at esrb.org for games from Nintendo, Sony, Microsoft/Xbox/Activision/Bethesda, Take-Two/Rockstar/2K, EA/Respawn, Ubisoft, Capcom, Konami, Square Enix, Sega/Atlus, Bandai Namco; '+
-      '(2) New PEGI ratings from those same publishers; '+
-      '(3) USPTO trademark filings (Class 41 entertainment) from those publishers or their subsidiaries in 2025-2026; '+
-      '(4) Any news articles reporting on unannounced game ratings or trademark discoveries from those companies. '+
-      'Return ONLY a JSON array (no markdown). If you find results, include up to 12 items: '+
-      '[{"title":"game or trademark name","publisher":"studio","source":"ESRB|PEGI|USPTO",'+
-      '"detail":"description","date":"date","significance":"high|medium|low",'+
-      '"ticker":"e.g. TTWO","parent":"e.g. Take-Two Interactive","url":"source url or empty"}]. '+
-      'Return [] only if genuinely nothing found after searching.'
+    // Claude: USPTO trademark filings
+    const usptoPromise = claudeCall(
+      'Search for recent USPTO trademark filings (2025-2026) in Class 41 (entertainment/games) from these companies: '+
+      'Nintendo, Sony/PlayStation, Microsoft/Xbox/Bethesda/Activision, Take-Two/Rockstar/2K, EA/Respawn, '+
+      'Ubisoft, CD Projekt, Capcom, Konami, Square Enix, Sega/Atlus, Bandai Namco, FromSoftware/Kadokawa. '+
+      'Also search for any news about unannounced game ratings discovered in ESRB or PEGI databases from those publishers. '+
+      'Return ONLY a JSON array (no markdown): '+
+      '[{"title":"trademark or game name","publisher":"company","source":"USPTO","detail":"description",'+
+      '"date":"filing date","significance":"high|medium|low","ticker":"e.g. TTWO","parent":"e.g. Take-Two Interactive","url":"source url or empty"}]'
     );
 
-    const live=parseJSON(raw);
-    const liveArr=Array.isArray(live)?live:[];
+    const [rawgData, usptoRaw] = await Promise.all([rawgPromise, usptoPromise]);
+
+    const rawgFilings = [];
+    if(rawgData&&rawgData.results){
+      for(const g of rawgData.results){
+        const pub=(g.publishers||[]).find(p=>RAWG_PUBLISHERS.find(rp=>rp.id===p.id));
+        const rp=pub?RAWG_PUBLISHERS.find(r=>r.id===pub.id):null;
+        const resolvedByName=!rp&&(g.publishers||[]).map(p=>resolveTicker(p.name)).find(Boolean);
+        const ticker=rp?rp.ticker:(resolvedByName?resolvedByName.t:null);
+        const parent=rp?rp.parent:(resolvedByName?resolvedByName.p:null);
+        if(!ticker) continue;
+
+        const esrb=g.esrb_rating?g.esrb_rating.name:'';
+        const pegi=g.pegi_rating?g.pegi_rating.name:''; // RAWG includes PEGI when available
+        const pubName=pub?pub.name:(g.publishers||[])[0]?.name||'';
+
+        if(esrb){
+          rawgFilings.push({
+            title:g.name,publisher:pubName,source:'ESRB',
+            detail:`Rated ${esrb}`,date:g.released||'',
+            significance:'high',ticker,parent,
+            url:`https://rawg.io/games/${g.slug}`,_rawg:true,
+          });
+        }
+        if(pegi){
+          rawgFilings.push({
+            title:g.name,publisher:pubName,source:'PEGI',
+            detail:`PEGI ${pegi}`,date:g.released||'',
+            significance:'high',ticker,parent,
+            url:`https://rawg.io/games/${g.slug}`,_rawg:true,
+          });
+        }
+      }
+    }
+
+    const usptoFilings = parseJSON(usptoRaw)||[];
+
+    // Merge, deduplicate
     const seen=new Set();
-    regData=[...scraped.map(i=>({...i,_local:true})),...liveArr].filter(i=>{
+    regData=[...rawgFilings,...usptoFilings].filter(i=>{
       const k=(i.title||'').toLowerCase();
       if(!k||seen.has(k))return false;
       seen.add(k);return true;
     });
+
     renderReg();
-  }catch(e){err('reg-list','Error: '+e.message);}
+  }catch(e){errEl('reg-list','Error: '+e.message);}
 }
 
 function renderReg(){
   const el=document.getElementById('reg-list');
-  const items=regFilter==='all'?regData:regData.filter(i=>i.source===regFilter);
+  const items=regFilter==='all'?regData:regData.filter(i=>i.source===regFilter||
+    (regFilter==='ESRB'&&i.source==='ESRB')||(regFilter==='PEGI'&&i.source==='PEGI')||(regFilter==='USPTO'&&i.source==='USPTO'));
   if(!items.length){el.innerHTML='<div class="loading">No filings found — try refreshing</div>';return;}
-  el.innerHTML=items.map(i=>{
-    const col=COL[i.source]||COL.ESRB;
-    const sc=i.significance==='high'?'#E24B4A':i.significance==='medium'?'#BA7517':'#888780';
-    const ticker=i.ticker||i._ticker||'';
-    const parent=i.parent||i._parent||'';
-    const srcLink=i.url?`<a href="${i.url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--text3);margin-left:6px;opacity:.7">Source ↗</a>`:'';
-    return `<div class="reg-row">
-      <span class="reg-src" style="background:${col.bg};color:${col.c}">${i.source||'?'}</span>
-      <div style="flex:1">
-        <div class="reg-title">
-          <span class="sig-dot" style="background:${sc}"></span>${i.title||'Unknown'}
-          ${ticker?`<span class="ticker-tag">${ticker}</span>`:''}
-          ${i._local?'<span class="scraped-badge">scraped</span>':''}
-        </div>
-        <div class="reg-sub">
-          ${parent?`<span style="color:var(--text3)">${parent}</span> · `:''}
-          ${i.detail||''}${i.date?` · ${i.date}`:''}${srcLink}
-        </div>
+
+  const rawgItems=items.filter(i=>i._rawg);
+  const otherItems=items.filter(i=>!i._rawg);
+  let html='';
+
+  if(rawgItems.length){
+    html+=`<div class="section-divider">ESRB &amp; PEGI RATINGS — from RAWG database · data by <a href="https://rawg.io" target="_blank" style="color:inherit">RAWG</a></div>`;
+    html+=rawgItems.map(i=>renderRegRow(i)).join('');
+  }
+  if(otherItems.length){
+    html+=`<div class="section-divider" style="margin-top:16px">USPTO TRADEMARK FILINGS — via Claude live search</div>`;
+    html+=otherItems.map(i=>renderRegRow(i)).join('');
+  }
+  el.innerHTML=html;
+}
+
+function renderRegRow(i){
+  const col=COL[i.source]||COL.ESRB;
+  const sc=i.significance==='high'?'#E24B4A':i.significance==='medium'?'#BA7517':'#888780';
+  const ticker=i.ticker||'';
+  const parent=i.parent||'';
+  const srcLink=i.url?`<a href="${i.url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--text3);margin-left:6px;opacity:.7">${i._rawg?'RAWG':'Source'} ↗</a>`:'';
+  return `<div class="reg-row">
+    <span class="reg-src" style="background:${col.bg};color:${col.c}">${i.source||'?'}</span>
+    <div style="flex:1">
+      <div class="reg-title">
+        <span class="sig-dot" style="background:${sc}"></span>${i.title||''}
+        ${ticker?`<span class="ticker-tag">${ticker}</span>`:''}
+        ${i._rawg?'<span class="rawg-badge">RAWG</span>':''}
       </div>
-    </div>`;
-  }).join('');
+      <div class="reg-sub">
+        ${parent?`<span style="color:var(--text3)">${parent}</span> · `:''}
+        ${i.detail||''}${i.date?` · ${i.date}`:''}${srcLink}
+      </div>
+    </div>
+  </div>`;
 }
 
 checkProxy();
