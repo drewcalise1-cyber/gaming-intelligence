@@ -28,6 +28,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
 .btn{font-size:12px;padding:5px 14px;border-radius:8px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;}
 .btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+/* Calendar */
 .ev-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
 .ev-row:last-child{border:none;}
 .ev-badge{min-width:64px;width:64px;text-align:center;padding:4px 3px;border-radius:8px;font-size:10px;font-weight:500;line-height:1.35;flex-shrink:0;}
@@ -40,6 +41,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .section-divider{font-size:10px;font-weight:500;color:var(--text3);padding:8px 0 4px;border-bottom:0.5px solid var(--border);margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em;}
 .src-link{font-size:10px;color:var(--text3);margin-left:6px;opacity:.65;text-decoration:none;}
 .src-link:hover{opacity:1;text-decoration:underline;}
+/* Momentum */
 .mom-controls{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
 .mom-controls select{flex:1;font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text);}
 .score-block{display:flex;gap:16px;padding-bottom:14px;margin-bottom:14px;border-bottom:0.5px solid var(--border);align-items:center;}
@@ -57,17 +59,19 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .headline-title{font-size:13px;font-weight:500;}
 .headline-meta{font-size:11px;color:var(--text3);margin-top:2px;}
 .sent-pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;margin-left:5px;}
+/* Filing */
 .reg-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
 .reg-row:last-child{border:none;}
 .reg-src{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;align-self:flex-start;flex-shrink:0;}
 .sig-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;}
 .rawg-badge{display:inline-block;font-size:9px;font-weight:500;padding:1px 5px;border-radius:4px;background:#EAF3DE;color:#3B6D11;margin-left:5px;vertical-align:middle;}
+.count-badge{font-size:11px;color:var(--text3);margin-left:8px;}
 </style>
 </head>
 <body>
 <div class="app">
   <h1>Gaming intelligence</h1>
-  <p class="subtitle">Events &amp; releases &nbsp;·&nbsp; Media momentum &nbsp;·&nbsp; ESRB/PEGI ratings — publicly traded companies only</p>
+  <p class="subtitle">Events &amp; releases &nbsp;·&nbsp; Media momentum &nbsp;·&nbsp; ESRB ratings — publicly traded companies only</p>
   <div class="status-bar" id="status-bar">Connecting...</div>
 
   <div class="tabs">
@@ -76,6 +80,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
     <button class="tab" onclick="switchTab('reg',this)">Filing monitor</button>
   </div>
 
+  <!-- CALENDAR -->
   <div class="panel active" id="panel-cal">
     <div class="panel-header">
       <div class="chip-row" id="cal-chips" style="margin:0">
@@ -84,17 +89,22 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
         <button class="chip" onclick="filterCal('release',this)">Releases</button>
         <button class="chip" onclick="filterCal('hardware',this)">Hardware</button>
       </div>
-      <div style="display:flex;gap:6px">
-        <button class="btn" onclick="loadRawgReleases()">Refresh releases</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="count-badge" id="cal-count"></span>
+        <button class="btn" onclick="loadRawgReleases()">Refresh</button>
         <button class="btn btn-primary" onclick="loadClaudeEvents()">Search events ↗</button>
       </div>
     </div>
-    <p class="note">Releases from RAWG database (free, no AI tokens) matched by title to publicly traded publishers · Click "Search events" for live Claude search (~$0.003)</p>
-    <div id="cal-list"><div class="loading">Loading releases from RAWG...</div></div>
+    <p class="note">
+      Releases: past 60 days and all upcoming · from RAWG database (free) matched by title to publicly traded publishers ·
+      Click "Search events" for live Claude search of showcases &amp; hardware (~$0.003)
+    </p>
+    <div id="cal-list"><div class="loading">Loading...</div></div>
   </div>
 
+  <!-- MOMENTUM -->
   <div class="panel" id="panel-mom">
-    <p class="note">Select a company and click Scan — uses one Claude live search (~$0.003). <a href="/momentum_methodology.pdf" target="_blank" style="color:inherit;opacity:.7;margin-left:4px">Methodology ↗</a></p>
+    <p class="note">Select a company and click Scan — one Claude live search (~$0.003). <a href="/momentum_methodology.pdf" target="_blank" style="color:inherit;opacity:.7;margin-left:4px">Methodology ↗</a></p>
     <div class="mom-controls">
       <select id="mom-select">
         <optgroup label="US — NASDAQ / NYSE">
@@ -125,62 +135,54 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
     <div id="mom-results"></div>
   </div>
 
+  <!-- FILING MONITOR -->
   <div class="panel" id="panel-reg">
     <div class="panel-header">
-      <div class="chip-row" id="reg-chips" style="margin:0">
-        <button class="chip active" onclick="filterReg('all',this)">All</button>
-        <button class="chip" onclick="filterReg('ESRB',this)">ESRB</button>
-        <button class="chip" onclick="filterReg('PEGI',this)">PEGI</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:13px;font-weight:500">ESRB Rating Monitor</span>
+        <span class="count-badge" id="reg-count"></span>
       </div>
-      <button class="btn" onclick="loadRawgRatings()">Refresh ratings</button>
+      <button class="btn" onclick="loadRawgRatings()">Refresh</button>
     </div>
-    <p class="note">Real ESRB &amp; PEGI ratings from RAWG database (free) — matched to publicly traded publishers by title keywords</p>
-    <div id="reg-list"><div class="loading">Loading ratings from RAWG...</div></div>
+    <p class="note">
+      Real ESRB ratings from RAWG database (free, no AI tokens) · Titles released in the past 12 months ·
+      Matched to publicly traded publishers by title keywords · Sorted by release date descending
+    </p>
+    <div id="reg-list"><div class="loading">Loading ESRB ratings from RAWG...</div></div>
   </div>
 </div>
 
 <script>
-// ── Title-based ticker lookup (no publisher field needed) ─────────────────────
-// Maps title keywords → listed parent. Longest match wins.
+// ── Today's date helpers ─────────────────────────────────────────────────────
+function today(){ return new Date(); }
+function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); return d; }
+function daysAhead(n){ const d=new Date(); d.setDate(d.getDate()+n); return d; }
+function isoDate(d){ return d.toISOString().slice(0,10); }
+
+// ── Title-based ticker lookup ─────────────────────────────────────────────────
 const TITLE_MAP = [
-  // Microsoft / MSFT
-  {kw:['doom','quake','elder scrolls','oblivion','skyrim','fallout','starfield','wolfenstein','dishonored','prey','deathloop','redfall','hi-fi rush','indiana jones','great circle','gears of war','halo','forza','sea of thieves','grounded','age of empires','minecraft','call of duty','world of warcraft','overwatch','diablo','starcraft','hearthstone','candy crush','borderlands','tiny tina'],t:'MSFT',p:'Microsoft'},
-  // Sony / SONY
-  {kw:['god of war','spider-man','the last of us','last of us','horizon','ghost of tsushima','ghost of yotei','gran turismo','uncharted','astro bot','ratchet','returnal','bloodborne','days gone','sackboy','destruction allstars','marvel wolverine','marvels wolverine','intergalactic','concord','marathon','helldivers'],t:'SONY',p:'Sony Group'},
-  // Take-Two / TTWO
-  {kw:['grand theft auto','gta','red dead','nba 2k','nba2k','mafia','bioshock','xcom','civilization','sid meier','borderlands','tiny tina','saints row','kerbal','into the breach'],t:'TTWO',p:'Take-Two Interactive'},
-  // Electronic Arts / EA
-  {kw:['battlefield','ea sports','ea fc','fifa','madden','the sims','sims','need for speed','apex legends','star wars jedi','dragon age','mass effect','dead space','it takes two','split fiction','wild hearts','f1 2','f1 25','f1 26','plants vs zombies','command conquer','medal of honor','burnout'],t:'EA',p:'Electronic Arts'},
-  // Ubisoft / UBI.PA
-  {kw:["assassin's creed","assassins creed",'far cry','rainbow six','ghost recon','the division','watch dogs','watch_dogs','prince of persia','just dance','for honor','immortals fenyx','riders republic','skull and bones'],t:'UBI.PA',p:'Ubisoft'},
-  // CD Projekt / CDR.WA
+  {kw:['doom','quake','elder scrolls','oblivion','skyrim','fallout','starfield','wolfenstein','dishonored','prey','deathloop','redfall','hi-fi rush','indiana jones','great circle','gears of war','halo ','forza','sea of thieves','grounded','age of empires','minecraft','call of duty','world of warcraft','overwatch','diablo','starcraft','hearthstone','candy crush','machine games','machinegames','fable'],t:'MSFT',p:'Microsoft'},
+  {kw:['god of war','spider-man','the last of us','last of us','horizon forbidden','horizon zero','ghost of tsushima','ghost of yotei','gran turismo','uncharted','astro bot','ratchet','returnal','bloodborne','days gone','sackboy','marvels wolverine',"marvel's wolverine",'intergalactic','concord','marathon','helldivers','until dawn'],t:'SONY',p:'Sony Group'},
+  {kw:['grand theft auto','gta vi','gta 6','red dead','nba 2k','nba2k','mafia ','bioshock','xcom','civilization','sid meier','borderlands','tiny tina','kerbal','into the breach'],t:'TTWO',p:'Take-Two Interactive'},
+  {kw:['battlefield','ea sports','ea fc','fifa ','madden','the sims ','sims 4','need for speed','apex legends','star wars jedi','dragon age','mass effect','dead space','it takes two','split fiction','wild hearts','f1 25','f1 26','plants vs zombies','command conquer'],t:'EA',p:'Electronic Arts'},
+  {kw:["assassin's creed","assassins creed",'far cry','rainbow six','ghost recon','the division','watch dogs','watch_dogs','prince of persia','just dance','for honor','skull and bones','riders republic','immortals fenyx'],t:'UBI.PA',p:'Ubisoft'},
   {kw:['witcher','cyberpunk'],t:'CDR.WA',p:'CD Projekt'},
-  // Nintendo / 7974.T
-  {kw:['mario','zelda','metroid','pokemon','kirby','donkey kong','splatoon','animal crossing','fire emblem','xenoblade','pikmin','f-zero','star fox','wario','yoshi','nintendo switch','nintendo direct','bravely default','front mission','fantasian','dragon quest i','dragon quest ii','dragon quest iii','dragon quest vii'],t:'7974.T',p:'Nintendo'},
-  // Capcom / 9697.T
-  {kw:['resident evil','monster hunter','devil may cry','street fighter','dragon dogma',"dragon's dogma",'mega man','ace attorney','onimusha','okami','viewtiful joe','lost planet'],t:'9697.T',p:'Capcom'},
-  // Konami / 9766.T
-  {kw:['metal gear','silent hill','castlevania','efootball','pro evolution soccer','yu-gi-oh','suikoden','contra'],t:'9766.T',p:'Konami'},
-  // Square Enix / 9684.T
-  {kw:['final fantasy','kingdom hearts','dragon quest iv','dragon quest v','dragon quest vi','dragon quest viii','dragon quest ix','dragon quest xi','nier','octopath','triangle strategy','live a live','chrono','front mission 3','saga frontier','romancing saga','tactics ogre','final fantasy tactics','fantasian neo'],t:'9684.T',p:'Square Enix'},
-  // Sega Sammy / 6460.T
-  {kw:['sonic','persona','yakuza','like a dragon','judgment','lost judgment','totems','atlus','two point','football manager','total war','valkyria','bayonetta','vanquish','hell let loose','sega football'],t:'6460.T',p:'Sega Sammy'},
-  // Bandai Namco / 7832.T
-  {kw:['elden ring','dark souls','sekiro','armored core','demon souls','little nightmares','tekken','soul calibur','pac-man','naruto','one piece','dragon ball','tales of','ace combat','gundam','code vein'],t:'7832.T',p:'Bandai Namco'},
-  // Koei Tecmo / 3635.T
-  {kw:['ninja gaiden','nioh','wo long','dead or alive','dynasty warriors','warriors orochi','romance of three kingdoms','nobunagas ambition','attack on titan','fire emblem warriors'],t:'3635.T',p:'Koei Tecmo'},
-  // Kadokawa/FromSoftware / 9468.T — note: elden ring handled by Bandai Namco above as publisher
-  {kw:['shadow of the erdtree'],t:'9468.T',p:'Kadokawa'},
-  // Roblox / RBLX
+  {kw:['super mario','mario kart','mario odyssey','mario wonder','mario rpg','zelda','metroid','pokemon','kirby','donkey kong','splatoon','animal crossing','fire emblem','xenoblade','pikmin','star fox','wario','yoshi','bravely default','front mission 3','dragon quest i ','dragon quest ii ','dragon quest iii','dragon quest vii','dragon quest xi','nintendo switch sports','game builder'],t:'7974.T',p:'Nintendo'},
+  {kw:['resident evil','monster hunter','devil may cry','street fighter',"dragon's dogma",'dragons dogma','mega man','ace attorney','onimusha','okami','lost planet','capcom fighting'],t:'9697.T',p:'Capcom'},
+  {kw:['metal gear','silent hill','castlevania','efootball','pro evolution soccer','yu-gi-oh','suikoden','contra ','zone of the enders'],t:'9766.T',p:'Konami'},
+  {kw:['final fantasy','kingdom hearts','dragon quest iv','dragon quest v','dragon quest vi','dragon quest viii','dragon quest ix','nier','octopath','triangle strategy','live a live','chrono','saga frontier','romancing saga','tactics ogre','final fantasy tactics','fantasian','bravely second'],t:'9684.T',p:'Square Enix'},
+  {kw:['sonic the','persona ','yakuza','like a dragon','judgment ','two point','football manager','total war','valkyria','bayonetta','vanquish','hell let loose','sega football club','atlus'],t:'6460.T',p:'Sega Sammy'},
+  {kw:['elden ring','dark souls','sekiro','armored core','demon\'s souls','demons souls','little nightmares','tekken','soulcalibur','pac-man','naruto','one piece ','dragon ball','tales of ','ace combat','gundam','code vein','blue protocol'],t:'7832.T',p:'Bandai Namco'},
+  {kw:['ninja gaiden','nioh','wo long','dead or alive','dynasty warriors','warriors orochi','romance of three kingdoms','fire emblem warriors'],t:'3635.T',p:'Koei Tecmo'},
   {kw:['roblox'],t:'RBLX',p:'Roblox Corp'},
 ];
 
 function resolveTicker(title){
   if(!title) return null;
-  const t = title.toLowerCase();
+  const t=title.toLowerCase();
   for(const entry of TITLE_MAP){
     for(const kw of entry.kw){
-      if(t.includes(kw)) return {ticker:entry.t, parent:entry.p};
+      if(t.includes(kw)) return {ticker:entry.t,parent:entry.p};
     }
   }
   return null;
@@ -191,12 +193,12 @@ const COL={
   release: {bg:'#E1F5EE',c:'#0F6E56'},
   hardware:{bg:'#FAEEDA',c:'#854F0B'},
   ESRB:    {bg:'#FAECE7',c:'#993C1D'},
-  PEGI:    {bg:'#EEEDFE',c:'#534AB7'},
 };
 
 let calEvents=[], calReleases=[], regData=[];
-let calFilter='all', regFilter='all';
+let calFilter='all';
 
+// ── API helpers ───────────────────────────────────────────────────────────────
 async function claudeCall(prompt){
   const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
@@ -231,9 +233,7 @@ async function init(){
     const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1,messages:[{role:'user',content:'hi'}]})});
     const d=await r.json();
-    if(d.error&&d.error.message.includes('API_KEY')){
-      setStatus('ANTHROPIC_API_KEY missing in Vercel environment variables',false);return;
-    }
+    if(d.error&&d.error.message.includes('API_KEY')){setStatus('ANTHROPIC_API_KEY missing in Vercel environment variables',false);return;}
     setStatus('Connected — RAWG database + Claude live search ready',true);
     loadRawgReleases();
     loadRawgRatings();
@@ -245,8 +245,11 @@ function switchTab(n,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');document.getElementById('panel-'+n).classList.add('active');
 }
-function filterCal(f,btn){calFilter=f;document.querySelectorAll('#cal-chips .chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');renderCal();}
-function filterReg(f,btn){regFilter=f;document.querySelectorAll('#reg-chips .chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');renderReg();}
+function filterCal(f,btn){
+  calFilter=f;
+  document.querySelectorAll('#cal-chips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');renderCal();
+}
 
 function fmtDate(iso){
   if(!iso) return 'TBA';
@@ -254,63 +257,55 @@ function fmtDate(iso){
   return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 }
 
-// ── RAWG: game releases (title-based matching, no publisher field needed) ─────
+// ── RAWG releases: 60 days ago → 2 years ahead, 3 pages ──────────────────────
 async function loadRawgReleases(){
-  document.getElementById('cal-list').innerHTML='<div class="loading">Loading releases from RAWG...</div>';
-  try{
-    // Fetch a large set of recent/upcoming games, then filter by title match
-    const data = await rawg('games',{
-      dates:'2024-06-01,2027-06-30',
-      ordering:'-added',
-      page_size:'40',
-    });
+  document.getElementById('cal-list').innerHTML='<div class="loading">Loading releases from RAWG (3 pages)...</div>';
 
+  const dateFrom = isoDate(daysAgo(60));          // 60 days ago
+  const dateTo   = isoDate(daysAhead(730));        // 2 years ahead
+
+  try{
+    // Fetch 3 pages in parallel with different orderings for broader coverage
+    const [p1,p2,p3] = await Promise.all([
+      rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'released',     page_size:'40', page:'1'}),
+      rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'-added',       page_size:'40', page:'1'}),
+      rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'-metacritic',  page_size:'40', page:'1'}),
+    ]);
+
+    const seen=new Set();
     calReleases=[];
-    if(data&&data.results){
+
+    for(const data of [p1,p2,p3]){
+      if(!data||!data.results) continue;
       for(const g of data.results){
-        if(!g.released) continue;
+        if(!g.released||seen.has(g.name)) continue;
         const info=resolveTicker(g.name);
         if(!info) continue;
-        const esrb=g.esrb_rating?.name||'';
+        seen.add(g.name);
         calReleases.push({
           title:g.name, date:g.released, type:'release',
           publisher:info.parent, ticker:info.ticker,
-          esrb, metacritic:g.metacritic||null, slug:g.slug,
-          _source:'rawg',
+          esrb:g.esrb_rating?.name||'',
+          metacritic:g.metacritic||null,
+          slug:g.slug, _source:'rawg',
         });
       }
     }
 
-    // If we got very few results, try a second page with different ordering
-    if(calReleases.length < 5){
-      const data2 = await rawg('games',{
-        dates:'2024-01-01,2027-06-30',
-        ordering:'-rating',
-        page_size:'40',
-      });
-      if(data2&&data2.results){
-        const seen=new Set(calReleases.map(r=>r.title));
-        for(const g of data2.results){
-          if(!g.released||seen.has(g.name)) continue;
-          const info=resolveTicker(g.name);
-          if(!info) continue;
-          const esrb=g.esrb_rating?.name||'';
-          seen.add(g.name);
-          calReleases.push({
-            title:g.name, date:g.released, type:'release',
-            publisher:info.parent, ticker:info.ticker,
-            esrb, metacritic:g.metacritic||null, slug:g.slug,
-            _source:'rawg',
-          });
-        }
-      }
-    }
+    // Sort: upcoming first by date asc, then recent desc
+    calReleases.sort((a,b)=>{
+      const now=new Date();
+      const da=new Date(a.date), db=new Date(b.date);
+      const aFuture=da>=now, bFuture=db>=now;
+      if(aFuture&&bFuture) return da-db;   // both future: ascending
+      if(!aFuture&&!bFuture) return db-da; // both past: most recent first
+      return aFuture?-1:1;                  // future before past
+    });
 
     renderCal();
-    if(!calReleases.length){
-      document.getElementById('cal-list').innerHTML+=
-        '<div class="loading" style="color:#854F0B;margin-top:8px">No matches found in this RAWG batch — click "Search events" to use Claude instead</div>';
-    }
+    const el=document.getElementById('cal-count');
+    if(el) el.textContent=calReleases.length?`${calReleases.length} titles`:'';
+
   }catch(e){errEl('cal-list','RAWG error: '+e.message);}
 }
 
@@ -320,12 +315,11 @@ async function loadClaudeEvents(){
   el.innerHTML='<div class="loading">Searching for gaming events via Claude...</div>';
   try{
     const raw=await claudeCall(
-      'Search for upcoming video game industry events and hardware announcements in 2026 and 2027. '+
+      'Search for upcoming video game industry events, showcases, and hardware announcements in 2026 and 2027. '+
       'Include: Summer Game Fest, Gamescom, Nintendo Direct, Xbox showcase, PlayStation State of Play, '+
       'The Game Awards, and confirmed hardware from Sony/Microsoft/Nintendo. '+
-      'Also include confirmed major game releases with dates from publicly traded publishers. '+
       'Return ONLY a JSON array (no markdown). Each item: '+
-      '{"title":"...","date":"YYYY-MM-DD or TBA","type":"event|hardware|release","detail":"one sentence","publisher":"company"}'
+      '{"title":"...","date":"YYYY-MM-DD or TBA","type":"event|hardware","detail":"one sentence","publisher":"company or empty"}'
     );
     calEvents=parseJSON(raw)||[];
     renderCal();
@@ -336,24 +330,26 @@ function renderCal(){
   const el=document.getElementById('cal-list');
   const combined=[
     ...calEvents.map(e=>({...e,_source:'claude'})),
-    ...calReleases
-  ].sort((a,b)=>{
-    if(!a.date&&!b.date) return 0;
-    if(!a.date) return 1; if(!b.date) return -1;
-    return new Date(a.date)-new Date(b.date);
-  });
-  const items=calFilter==='all'?combined:combined.filter(i=>i.type===calFilter);
-  if(!items.length){el.innerHTML='<div class="loading">No items for this filter</div>';return;}
+    ...calReleases,
+  ].filter(i=>calFilter==='all'||i.type===calFilter);
 
-  const rawgItems=items.filter(i=>i._source==='rawg');
-  const claudeItems=items.filter(i=>i._source==='claude');
+  if(!combined.length){el.innerHTML='<div class="loading">No items for this filter</div>';return;}
+
+  const rawgItems=combined.filter(i=>i._source==='rawg');
+  const claudeItems=combined.filter(i=>i._source==='claude');
   let html='';
+
   if(claudeItems.length){
-    html+=`<div class="section-divider">Events &amp; hardware — Claude live search</div>`;
+    html+=`<div class="section-divider">Events &amp; Hardware — Claude live search</div>`;
     html+=claudeItems.map(renderCalRow).join('');
   }
   if(rawgItems.length){
-    html+=`<div class="section-divider" style="margin-top:${claudeItems.length?14:0}px">Confirmed releases — RAWG database &nbsp;<a href="https://rawg.io" target="_blank" class="src-link">rawg.io ↗</a></div>`;
+    const upcomingCount=rawgItems.filter(i=>new Date(i.date)>=new Date()).length;
+    const recentCount=rawgItems.length-upcomingCount;
+    html+=`<div class="section-divider" style="margin-top:${claudeItems.length?14:0}px">
+      Confirmed releases — RAWG &nbsp;<a href="https://rawg.io" target="_blank" class="src-link">rawg.io ↗</a>
+      <span style="margin-left:8px;font-weight:400">${upcomingCount} upcoming · ${recentCount} recent</span>
+    </div>`;
     html+=rawgItems.map(renderCalRow).join('');
   }
   el.innerHTML=html;
@@ -365,89 +361,111 @@ function renderCalRow(i){
   const parts=dateStr.split(' ');
   const line1=parts.length>=2?parts[0]+' '+parts[1]:dateStr;
   const line2=parts.length>=3?parts[2]:'';
-  const badge=`<div>${line1}</div>${line2?`<div>${line2}</div>`:''}`;
+
+  // Mark past releases differently
+  const isPast=i.date&&new Date(i.date)<new Date();
+  const badgeBg=isPast?'var(--bg3)':col.bg;
+  const badgeC=isPast?'var(--text3)':col.c;
+
   const ticker=i.ticker?`<span class="ticker-tag">${i.ticker}</span>`:'';
   const esrb=i.esrb?`<span class="rating-pill">${i.esrb}</span>`:'';
   const mc=i.metacritic?`<span class="mc-pill">MC ${i.metacritic}</span>`:'';
   const rawgLink=i.slug?`<a href="https://rawg.io/games/${i.slug}" target="_blank" rel="noopener" class="src-link">RAWG ↗</a>`:'';
   const pub=i.publisher?`<span style="font-size:11px;color:var(--text3)"> — ${i.publisher}</span>`:'';
   const detail=i.detail?`<div class="ev-sub">${i.detail}</div>`:'';
+  const pastTag=isPast?`<span style="font-size:10px;color:var(--text3);margin-left:4px;opacity:.7">released</span>`:'';
+
   return `<div class="ev-row">
-    <div class="ev-badge" style="background:${col.bg};color:${col.c}">${badge}</div>
+    <div class="ev-badge" style="background:${badgeBg};color:${badgeC}">
+      <div>${line1}</div>${line2?`<div>${line2}</div>`:''}
+    </div>
     <div style="flex:1;min-width:0">
       <div class="ev-title">${i.title||''}${pub}
         <span class="ev-pill" style="background:${col.bg};color:${col.c}">${i.type}</span>
-        ${ticker}${esrb}${mc}${rawgLink}
+        ${ticker}${esrb}${mc}${rawgLink}${pastTag}
       </div>${detail}
     </div>
   </div>`;
 }
 
-// ── RAWG: ratings (title-based matching) ────────────────────────────────────
+// ── RAWG ESRB ratings: past 12 months ────────────────────────────────────────
 async function loadRawgRatings(){
-  document.getElementById('reg-list').innerHTML='<div class="loading">Loading ESRB/PEGI ratings from RAWG...</div>';
+  document.getElementById('reg-list').innerHTML='<div class="loading">Loading ESRB ratings from RAWG (3 pages)...</div>';
+
+  const dateFrom = isoDate(daysAgo(365));   // 12 months ago
+  const dateTo   = isoDate(today());
+
   try{
-    // Fetch recent games with ESRB ratings
-    const [data1, data2] = await Promise.all([
-      rawg('games',{dates:'2023-01-01,2026-12-31',ordering:'-released',page_size:'40'}),
-      rawg('games',{dates:'2023-01-01,2026-12-31',ordering:'-rating',page_size:'40'}),
+    const [p1,p2,p3]=await Promise.all([
+      rawg('games',{dates:`${dateFrom},${dateTo}`,ordering:'-released',page_size:'40',page:'1'}),
+      rawg('games',{dates:`${dateFrom},${dateTo}`,ordering:'-rating',   page_size:'40',page:'1'}),
+      rawg('games',{dates:`${dateFrom},${dateTo}`,ordering:'-added',    page_size:'40',page:'1'}),
     ]);
 
     const seen=new Set();
     regData=[];
 
-    for(const data of [data1, data2]){
+    for(const data of [p1,p2,p3]){
       if(!data||!data.results) continue;
       for(const g of data.results){
         if(seen.has(g.name)) continue;
-        const esrb=g.esrb_rating?.name;
-        const pegi=g.pegi_rating?.name;
-        if(!esrb&&!pegi) continue;
+        if(!g.esrb_rating) continue;          // only include ESRB-rated games
         const info=resolveTicker(g.name);
         if(!info) continue;
         seen.add(g.name);
-        if(esrb) regData.push({
-          title:g.name, source:'ESRB', detail:`Rated ${esrb}`,
-          date:g.released||'', ticker:info.ticker, parent:info.parent,
-          url:`https://rawg.io/games/${g.slug}`, _rawg:true,
-          significance: esrb==='Mature'||esrb==='Adults Only'?'high':'medium',
-        });
-        if(pegi) regData.push({
-          title:g.name, source:'PEGI', detail:`PEGI ${pegi}`,
-          date:g.released||'', ticker:info.ticker, parent:info.parent,
-          url:`https://rawg.io/games/${g.slug}`, _rawg:true, significance:'medium',
+        regData.push({
+          title:g.name,
+          source:'ESRB',
+          detail:`Rated ${g.esrb_rating.name}`,
+          date:g.released||'',
+          ticker:info.ticker,
+          parent:info.parent,
+          url:`https://rawg.io/games/${g.slug}`,
+          esrbSlug:g.esrb_rating.slug,
+          metacritic:g.metacritic||null,
         });
       }
     }
 
+    // Sort most recently released first
+    regData.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
     renderReg();
-    if(!regData.length){
-      document.getElementById('reg-list').innerHTML+=
-        '<div class="loading" style="color:#854F0B;margin-top:8px">No ratings found in this RAWG batch — try refreshing for a different sample</div>';
-    }
+    const el=document.getElementById('reg-count');
+    if(el) el.textContent=regData.length?`${regData.length} titles`:'';
+
   }catch(e){errEl('reg-list','RAWG error: '+e.message);}
 }
 
 function renderReg(){
   const el=document.getElementById('reg-list');
-  const items=regFilter==='all'?regData:regData.filter(i=>i.source===regFilter);
-  if(!items.length){el.innerHTML='<div class="loading">No filings found</div>';return;}
-
-  let html=`<div class="section-divider">ESRB &amp; PEGI ratings — RAWG database &nbsp;<a href="https://rawg.io" target="_blank" class="src-link">rawg.io ↗</a></div>`;
-  html+=items.map(i=>{
-    const col=COL[i.source]||COL.ESRB;
-    const sc=i.significance==='high'?'#E24B4A':'#BA7517';
-    const srcLink=i.url?`<a href="${i.url}" target="_blank" rel="noopener" class="src-link">RAWG ↗</a>`:'';
+  if(!regData.length){
+    el.innerHTML='<div class="loading">No ESRB-rated titles found in this RAWG sample — try refreshing</div>';
+    return;
+  }
+  const esrbColor={
+    'everyone':'#3B6D11','everyone-10-plus':'#3B6D11',
+    'teen':'#854F0B','mature':'#993C1D','adults-only':'#993C1D','rating-pending':'#888780',
+  };
+  let html=`<div class="section-divider">ESRB ratings · past 12 months · ${regData.length} titles from publicly traded publishers &nbsp;<a href="https://rawg.io" target="_blank" class="src-link">rawg.io ↗</a></div>`;
+  html+=regData.map(i=>{
+    const ratingColor=esrbColor[i.esrbSlug]||'#888780';
+    const ratingBg=i.esrbSlug==='mature'||i.esrbSlug==='adults-only'?'#FAECE7':i.esrbSlug==='teen'?'#FAEEDA':'#EAF3DE';
+    const srcLink=`<a href="${i.url}" target="_blank" rel="noopener" class="src-link">RAWG ↗</a>`;
+    const mc=i.metacritic?`<span class="mc-pill" style="margin-left:4px">MC ${i.metacritic}</span>`:'';
     return `<div class="reg-row">
-      <span class="reg-src" style="background:${col.bg};color:${col.c}">${i.source}</span>
+      <span class="reg-src" style="background:${ratingBg};color:${ratingColor}">${i.detail}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500">
-          <span class="sig-dot" style="background:${sc}"></span>${i.title||''}
+          ${i.title||''}
           <span class="ticker-tag">${i.ticker}</span>
           <span class="rawg-badge">RAWG</span>
+          ${mc}
         </div>
         <div style="font-size:11px;color:var(--text2);margin-top:1px">
-          <span style="color:var(--text3)">${i.parent}</span> · ${i.detail||''}${i.date?` · ${fmtDate(i.date)}`:''}${srcLink}
+          <span style="color:var(--text3)">${i.parent}</span>
+          ${i.date?` · Released ${fmtDate(i.date)}`:''}
+          ${srcLink}
         </div>
       </div>
     </div>`;
@@ -455,6 +473,7 @@ function renderReg(){
   el.innerHTML=html;
 }
 
+// ── Media Momentum ────────────────────────────────────────────────────────────
 async function runMom(){
   const sel=document.getElementById('mom-select');
   const q=sel.value;
@@ -479,8 +498,14 @@ async function runMom(){
     const tl=d.trend==='rising'?'↑ Rising':d.trend==='falling'?'↓ Falling':'→ Stable';
     el.innerHTML=`
       <div class="score-block">
-        <div style="text-align:center"><div class="score-num" style="color:${sc}">${Math.round(d.score)}</div><div class="score-label">momentum score</div></div>
-        <div style="flex:1"><div class="score-summary">${d.summary||''}</div><span class="trend-pill" style="${ts}">${tl}</span></div>
+        <div style="text-align:center">
+          <div class="score-num" style="color:${sc}">${Math.round(d.score)}</div>
+          <div class="score-label">momentum score</div>
+        </div>
+        <div style="flex:1">
+          <div class="score-summary">${d.summary||''}</div>
+          <span class="trend-pill" style="${ts}">${tl}</span>
+        </div>
       </div>
       ${(d.signals||[]).map(s=>{const f=s.value>65?'#1D9E75':s.value>35?'#BA7517':'#E24B4A';
         return `<div class="bar-row"><span class="bar-label">${s.label}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.value)}%;background:${f}"></div></div><span class="bar-val">${Math.round(s.value)}</span></div>`;
@@ -492,8 +517,10 @@ async function runMom(){
         const link=h.url&&h.url.startsWith('http')
           ?`<a href="${h.url}" target="_blank" rel="noopener" class="src-link">Read ↗</a>`
           :`<a href="https://www.google.com/search?q=${encodeURIComponent((h.title||'')+' '+(h.source||''))}" target="_blank" rel="noopener" class="src-link">Search ↗</a>`;
-        return `<div class="headline-card"><div class="headline-title">${h.title||''}</div>
-          <div class="headline-meta">${h.source||''}${dateStr} ${link}${h.sentiment?`<span class="sent-pill" style="${sp}">${h.sentiment}</span>`:''}</div></div>`;
+        return `<div class="headline-card">
+          <div class="headline-title">${h.title||''}</div>
+          <div class="headline-meta">${h.source||''}${dateStr} ${link}${h.sentiment?`<span class="sent-pill" style="${sp}">${h.sentiment}</span>`:''}</div>
+        </div>`;
       }).join('')}`;
   }catch(e){errEl('mom-results','Error: '+e.message);}
 }
