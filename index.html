@@ -155,7 +155,12 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
     <!-- GAMING NEWS -->
     <div class="intel-subpanel" id="intel-news">
       <div class="panel-header">
-        <span class="count-badge" id="news-count"></span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="news-pub-select" onchange="renderNews()">
+            <option value="all">All publishers</option>
+          </select>
+          <span class="count-badge" id="news-count"></span>
+        </div>
         <button class="btn" onclick="loadGamingNews()">Refresh</button>
       </div>
       <p class="note">
@@ -313,6 +318,13 @@ function populateSelects(){
   const finSel=document.getElementById('fin-select');
   if(momSel) momSel.innerHTML=opts;
   if(finSel) finSel.innerHTML=opts;
+
+  // News dropdown filters by ticker (data already in memory), so value = ticker, not query string
+  const newsSel=document.getElementById('news-pub-select');
+  if(newsSel){
+    const newsOpts = PUBLISHERS.map(p=>`<option value="${p.ticker}">${p.label}</option>`).join('');
+    newsSel.innerHTML = `<option value="all">All publishers</option>` + newsOpts;
+  }
 }
 
 const COL={
@@ -693,8 +705,6 @@ async function loadGamingNews(){
     });
 
     renderNews();
-    const el2=document.getElementById('news-count');
-    if(el2) el2.textContent = `${newsItemsFiltered.length} of ${newsItemsRaw.length} fetched`;
     const failedCount = results.filter(r=>r.status!=='fulfilled').length;
     if(failedCount) warnEl('news-list', `${failedCount} of ${GAMING_FEEDS.length} feeds did not respond`);
   }catch(e){errEl('news-list','Feed error: '+e.message);}
@@ -702,11 +712,23 @@ async function loadGamingNews(){
 
 function renderNews(){
   const el=document.getElementById('news-list');
-  if(!newsItemsFiltered.length){
-    el.innerHTML='<div class="loading">No articles matched a publicly traded publisher + financial-relevance filter in the current feed batch. Try refreshing — feeds rotate frequently.</div>';
+  const sel=document.getElementById('news-pub-select');
+  const pubFilter = sel ? sel.value : 'all';
+
+  const visible = pubFilter==='all'
+    ? newsItemsFiltered
+    : newsItemsFiltered.filter(i=>i._matchedPublisher===pubFilter);
+
+  const countEl=document.getElementById('news-count');
+  if(countEl) countEl.textContent = `${visible.length} of ${newsItemsFiltered.length} relevant (${newsItemsRaw.length} fetched)`;
+
+  if(!visible.length){
+    el.innerHTML = pubFilter==='all'
+      ? '<div class="loading">No articles matched a publicly traded publisher + financial-relevance filter in the current feed batch. Try refreshing — feeds rotate frequently.</div>'
+      : '<div class="loading">No matching articles for this publisher in the current feed batch. Try "All publishers" or refresh — feeds rotate frequently.</div>';
     return;
   }
-  el.innerHTML = newsItemsFiltered.slice(0,60).map(i=>`
+  el.innerHTML = visible.slice(0,60).map(i=>`
     <div class="feed-row">
       <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
       <div style="flex:1;min-width:0">
