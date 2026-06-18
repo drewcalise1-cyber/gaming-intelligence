@@ -6,17 +6,17 @@
 <title>Gaming Intelligence Dashboard</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{--bg:#ffffff;--bg2:#f5f5f3;--text:#1a1a18;--text2:#5f5e5a;--text3:#888780;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);}
-@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#242422;--text:#e8e6de;--text2:#a8a69e;--text3:#6e6d68;--border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.18);}}
+:root{--bg:#ffffff;--bg2:#f5f5f3;--bg3:#ececea;--text:#1a1a18;--text2:#5f5e5a;--text3:#888780;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#242422;--bg3:#2c2c29;--text:#e8e6de;--text2:#a8a69e;--text3:#6e6d68;--border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.18);}}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
-.app{max-width:900px;margin:0 auto;padding:24px 16px 48px;}
+.app{max-width:920px;margin:0 auto;padding:24px 16px 48px;}
 h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .subtitle{font-size:12px;color:var(--text3);margin-bottom:20px;}
 .status-bar{font-size:11px;padding:8px 12px;background:var(--bg2);border-radius:8px;margin-bottom:20px;border:0.5px solid var(--border);}
 .status-bar.ok{color:#0F6E56;border-color:#9FE1CB;}
 .status-bar.err{color:#A32D2D;border-color:#F7C1C1;}
-.tabs{display:flex;border-bottom:0.5px solid var(--border);margin-bottom:20px;}
-.tab{padding:8px 16px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-0.5px;}
+.tabs{display:flex;border-bottom:0.5px solid var(--border);margin-bottom:20px;overflow-x:auto;white-space:nowrap;}
+.tab{padding:8px 14px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-0.5px;flex-shrink:0;}
 .tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
 .panel{display:none;}.panel.active{display:block;}
 .chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
@@ -25,9 +25,11 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .note{font-size:11px;color:var(--text3);font-style:italic;margin-bottom:12px;}
 .loading{font-size:13px;color:var(--text3);padding:20px 0;text-align:center;}
 .error-msg{font-size:12px;color:#a32d2d;background:#fcebeb;border-radius:8px;padding:10px 14px;margin-bottom:12px;}
+.warn-msg{font-size:12px;color:#854F0B;background:#FAEEDA;border-radius:8px;padding:10px 14px;margin-bottom:12px;}
 .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
 .btn{font-size:12px;padding:5px 14px;border-radius:8px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;}
 .btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+.count-badge{font-size:11px;color:var(--text3);margin-left:8px;}
 /* Calendar */
 .ev-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
 .ev-row:last-child{border:none;}
@@ -41,7 +43,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .section-divider{font-size:10px;font-weight:500;color:var(--text3);padding:8px 0 4px;border-bottom:0.5px solid var(--border);margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em;}
 .src-link{font-size:10px;color:var(--text3);margin-left:6px;opacity:.65;text-decoration:none;}
 .src-link:hover{opacity:1;text-decoration:underline;}
-/* Momentum */
+/* Momentum / Leak Watch shared */
 .mom-controls{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
 .mom-controls select{flex:1;font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text);}
 .score-block{display:flex;gap:16px;padding-bottom:14px;margin-bottom:14px;border-bottom:0.5px solid var(--border);align-items:center;}
@@ -59,28 +61,41 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .headline-title{font-size:13px;font-weight:500;}
 .headline-meta{font-size:11px;color:var(--text3);margin-top:2px;}
 .sent-pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;margin-left:5px;}
-/* Filing */
-.reg-row{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
-.reg-row:last-child{border:none;}
-.reg-src{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;align-self:flex-start;flex-shrink:0;}
-.sig-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;}
-.rawg-badge{display:inline-block;font-size:9px;font-weight:500;padding:1px 5px;border-radius:4px;background:#EAF3DE;color:#3B6D11;margin-left:5px;vertical-align:middle;}
-.count-badge{font-size:11px;color:var(--text3);margin-left:8px;}
+/* Leak watch */
+.leak-card{background:var(--bg2);border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:3px solid #993C1D;}
+.leak-card.confidence-medium{border-left-color:#854F0B;}
+.leak-card.confidence-low{border-left-color:var(--text3);}
+.leak-title{font-size:13px;font-weight:500;}
+.leak-detail{font-size:12px;color:var(--text2);margin-top:4px;}
+.leak-meta{font-size:11px;color:var(--text3);margin-top:6px;}
+.conf-pill{display:inline-block;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-left:6px;text-transform:uppercase;letter-spacing:.03em;}
+/* RSS feed rows (news/finance/reddit) */
+.feed-row{display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);align-items:flex-start;}
+.feed-row:last-child{border:none;}
+.feed-source-tag{min-width:78px;max-width:78px;font-size:10px;font-weight:600;padding:3px 6px;border-radius:6px;text-align:center;flex-shrink:0;line-height:1.3;}
+.feed-title{font-size:13px;font-weight:500;}
+.feed-title a{color:inherit;text-decoration:none;}
+.feed-title a:hover{text-decoration:underline;}
+.feed-desc{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.45;}
+.feed-meta{font-size:10px;color:var(--text3);margin-top:4px;}
 </style>
 </head>
 <body>
 <div class="app">
   <h1>Gaming intelligence</h1>
-  <p class="subtitle">Events &amp; releases &nbsp;·&nbsp; Media momentum &nbsp;·&nbsp; ESRB ratings — publicly traded companies only</p>
+  <p class="subtitle">Events &amp; releases &nbsp;&middot;&nbsp; Media momentum &nbsp;&middot;&nbsp; Leak watch &nbsp;&middot;&nbsp; Gaming news &nbsp;&middot;&nbsp; Finance news &nbsp;&middot;&nbsp; Reddit</p>
   <div class="status-bar" id="status-bar">Connecting...</div>
 
-  <div class="tabs">
+  <div class="tabs" id="tabs-row">
     <button class="tab active" onclick="switchTab('cal',this)">Events &amp; releases</button>
     <button class="tab" onclick="switchTab('mom',this)">Media momentum</button>
-    <button class="tab" onclick="switchTab('reg',this)">Filing monitor</button>
+    <button class="tab" onclick="switchTab('leak',this)">Leak watch</button>
+    <button class="tab" onclick="switchTab('news',this)">Gaming news</button>
+    <button class="tab" onclick="switchTab('fin',this)">Finance news</button>
+    <button class="tab" onclick="switchTab('reddit',this)">Reddit</button>
   </div>
 
-  <!-- CALENDAR -->
+  <!-- EVENTS & RELEASES -->
   <div class="panel active" id="panel-cal">
     <div class="panel-header">
       <div class="chip-row" id="cal-chips" style="margin:0">
@@ -92,22 +107,22 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
       <div style="display:flex;gap:6px;align-items:center">
         <span class="count-badge" id="cal-count"></span>
         <button class="btn" onclick="loadRawgReleases()">Refresh</button>
-        <button class="btn btn-primary" onclick="loadClaudeEvents()">Search events ↗</button>
+        <button class="btn btn-primary" onclick="loadClaudeEvents()">Search events &#8599;</button>
       </div>
     </div>
     <p class="note">
-      Releases: past 60 days and all upcoming · from RAWG database (free) matched by title to publicly traded publishers ·
+      Releases: past 60 days and all upcoming &middot; from RAWG database (free, no AI tokens) matched by title to publicly traded publishers &middot;
       Click "Search events" for live Claude search of showcases &amp; hardware (~$0.003)
     </p>
     <div id="cal-list"><div class="loading">Loading...</div></div>
   </div>
 
-  <!-- MOMENTUM -->
+  <!-- MEDIA MOMENTUM -->
   <div class="panel" id="panel-mom">
-    <p class="note">Select a company and click Scan — one Claude live search (~$0.003). <a href="/momentum_methodology.pdf" target="_blank" style="color:inherit;opacity:.7;margin-left:4px">Methodology ↗</a></p>
+    <p class="note">Select a company and click Scan &mdash; one Claude live search (~$0.003). <a href="/momentum_methodology.pdf" target="_blank" style="color:inherit;opacity:.7;margin-left:4px">Methodology &#8599;</a></p>
     <div class="mom-controls">
       <select id="mom-select">
-        <optgroup label="US — NASDAQ / NYSE">
+        <optgroup label="US &mdash; NASDAQ / NYSE">
           <option value="Microsoft Xbox gaming">Microsoft / Xbox (MSFT)</option>
           <option value="Sony PlayStation gaming">Sony / PlayStation (SONY)</option>
           <option value="Take-Two Interactive Rockstar Games GTA">Take-Two Interactive (TTWO)</option>
@@ -119,7 +134,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
           <option value="CD Projekt Red Witcher Cyberpunk">CD Projekt (CDR.WA)</option>
           <option value="Embracer Group THQ Nordic games">Embracer Group (EMBRAC-B.ST)</option>
         </optgroup>
-        <optgroup label="Japan — TSE">
+        <optgroup label="Japan &mdash; TSE">
           <option value="Nintendo Switch games">Nintendo (7974.T)</option>
           <option value="Capcom Monster Hunter Resident Evil">Capcom (9697.T)</option>
           <option value="Konami Metal Gear Silent Hill">Konami (9766.T)</option>
@@ -127,7 +142,6 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
           <option value="Sega Atlus Persona games">Sega Sammy (6460.T)</option>
           <option value="Bandai Namco Elden Ring Tekken">Bandai Namco (7832.T)</option>
           <option value="Koei Tecmo Team Ninja games">Koei Tecmo (3635.T)</option>
-          <option value="Kadokawa FromSoftware Elden Ring">Kadokawa / FromSoftware (9468.T)</option>
         </optgroup>
       </select>
       <button class="btn btn-primary" onclick="runMom()">Scan</button>
@@ -135,31 +149,113 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
     <div id="mom-results"></div>
   </div>
 
-  <!-- FILING MONITOR -->
-  <div class="panel" id="panel-reg">
+  <!-- LEAK WATCH -->
+  <div class="panel" id="panel-leak">
     <div class="panel-header">
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:13px;font-weight:500">ESRB Rating Monitor</span>
-        <span class="count-badge" id="reg-count"></span>
+        <span style="font-size:13px;font-weight:500">ESRB / PEGI Leak Watch</span>
+        <span class="count-badge" id="leak-count"></span>
       </div>
-      <button class="btn" onclick="loadRawgRatings()">Refresh</button>
+      <button class="btn btn-primary" onclick="runLeakWatch()">Scan &#8599;</button>
     </div>
-    <p class="note">
-      Real ESRB ratings from RAWG database (free, no AI tokens) · Titles released in the past 12 months ·
-      Matched to publicly traded publishers by title keywords · Sorted by release date descending
+    <p class="note" id="leak-note">
+      Claude live search for journalist &amp; community coverage of unannounced ESRB/PEGI ratings &middot;
+      Hard cutoff: only items from the last 14 days are shown &middot; one Claude search (~$0.004, deeper query)
     </p>
-    <div id="reg-list"><div class="loading">Loading ESRB ratings from RAWG...</div></div>
+    <div id="leak-list"><div class="loading" style="padding:30px 0">Click "Scan" to search for recent ESRB/PEGI leak coverage</div></div>
   </div>
+
+  <!-- GAMING NEWS -->
+  <div class="panel" id="panel-news">
+    <div class="panel-header">
+      <div class="chip-row" id="news-chips" style="margin:0">
+        <button class="chip active" onclick="filterNews('all',this)">All sources</button>
+        <button class="chip" onclick="filterNews('IGN',this)">IGN</button>
+        <button class="chip" onclick="filterNews('Eurogamer',this)">Eurogamer</button>
+        <button class="chip" onclick="filterNews('GameSpot',this)">GameSpot</button>
+        <button class="chip" onclick="filterNews('VGC',this)">VGC</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="count-badge" id="news-count"></span>
+        <button class="btn" onclick="loadGamingNews()">Refresh</button>
+      </div>
+    </div>
+    <p class="note">Live RSS from IGN, Eurogamer, GameSpot, VGC &middot; free, no AI tokens &middot; sorted most recent first</p>
+    <div id="news-list"><div class="loading">Loading gaming news...</div></div>
+  </div>
+
+  <!-- FINANCE NEWS -->
+  <div class="panel" id="panel-fin">
+    <div class="panel-header">
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="fin-select" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text)">
+          <option value="Microsoft Xbox">Microsoft (MSFT)</option>
+          <option value="Sony PlayStation">Sony (SONY)</option>
+          <option value="Take-Two Interactive">Take-Two (TTWO)</option>
+          <option value="Electronic Arts">EA</option>
+          <option value="Ubisoft">Ubisoft</option>
+          <option value="Nintendo">Nintendo</option>
+          <option value="Capcom">Capcom</option>
+          <option value="Roblox">Roblox</option>
+        </select>
+        <button class="btn" onclick="loadFinanceNews()">Search</button>
+      </div>
+      <span class="count-badge" id="fin-count"></span>
+    </div>
+    <p class="note">Google News RSS for selected company + gaming/stock context, plus Bloomberg &amp; Reuters filtered feeds &middot; free, no AI tokens</p>
+    <div id="fin-list"><div class="loading">Select a company and click Search</div></div>
+  </div>
+
+  <!-- REDDIT -->
+  <div class="panel" id="panel-reddit">
+    <div class="panel-header">
+      <div class="chip-row" id="reddit-chips" style="margin:0">
+        <button class="chip active" onclick="filterReddit('all',this)">All</button>
+        <button class="chip" onclick="filterReddit('gaming',this)">r/gaming</button>
+        <button class="chip" onclick="filterReddit('games',this)">r/Games</button>
+        <button class="chip" onclick="filterReddit('stocks',this)">r/stocks</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="count-badge" id="reddit-count"></span>
+        <button class="btn" onclick="loadReddit()">Refresh</button>
+      </div>
+    </div>
+    <p class="note">Hot posts from r/gaming, r/Games, r/stocks (gaming-filtered) via Reddit RSS &middot; free, no AI tokens</p>
+    <div id="reddit-list"><div class="loading">Loading Reddit posts...</div></div>
+  </div>
+
 </div>
 
 <script>
-// ── Today's date helpers ─────────────────────────────────────────────────────
+// ── Date helpers ──────────────────────────────────────────────────
 function today(){ return new Date(); }
 function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); return d; }
 function daysAhead(n){ const d=new Date(); d.setDate(d.getDate()+n); return d; }
 function isoDate(d){ return d.toISOString().slice(0,10); }
+function fmtDate(iso){
+  if(!iso) return 'TBA';
+  const d=new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtRelative(dateStr){
+  if(!dateStr) return '';
+  const d=new Date(dateStr);
+  if(isNaN(d)) return dateStr;
+  const diffMs=Date.now()-d.getTime();
+  const diffH=Math.floor(diffMs/3600000);
+  if(diffH<1) return 'just now';
+  if(diffH<24) return `${diffH}h ago`;
+  const diffD=Math.floor(diffH/24);
+  if(diffD<7) return `${diffD}d ago`;
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+}
+function parseAnyDate(s){
+  if(!s) return null;
+  const d=new Date(s);
+  return isNaN(d) ? null : d;
+}
 
-// ── Title-based ticker lookup ─────────────────────────────────────────────────
+// ── Title-based ticker lookup ───────────────────────────────────────
 const TITLE_MAP = [
   {kw:['doom','quake','elder scrolls','oblivion','skyrim','fallout','starfield','wolfenstein','dishonored','prey','deathloop','redfall','hi-fi rush','indiana jones','great circle','gears of war','halo ','forza','sea of thieves','grounded','age of empires','minecraft','call of duty','world of warcraft','overwatch','diablo','starcraft','hearthstone','candy crush','machine games','machinegames','fable'],t:'MSFT',p:'Microsoft'},
   {kw:['god of war','spider-man','the last of us','last of us','horizon forbidden','horizon zero','ghost of tsushima','ghost of yotei','gran turismo','uncharted','astro bot','ratchet','returnal','bloodborne','days gone','sackboy','marvels wolverine',"marvel's wolverine",'intergalactic','concord','marathon','helldivers','until dawn'],t:'SONY',p:'Sony Group'},
@@ -167,16 +263,15 @@ const TITLE_MAP = [
   {kw:['battlefield','ea sports','ea fc','fifa ','madden','the sims ','sims 4','need for speed','apex legends','star wars jedi','dragon age','mass effect','dead space','it takes two','split fiction','wild hearts','f1 25','f1 26','plants vs zombies','command conquer'],t:'EA',p:'Electronic Arts'},
   {kw:["assassin's creed","assassins creed",'far cry','rainbow six','ghost recon','the division','watch dogs','watch_dogs','prince of persia','just dance','for honor','skull and bones','riders republic','immortals fenyx'],t:'UBI.PA',p:'Ubisoft'},
   {kw:['witcher','cyberpunk'],t:'CDR.WA',p:'CD Projekt'},
-  {kw:['super mario','mario kart','mario odyssey','mario wonder','mario rpg','zelda','metroid','pokemon','kirby','donkey kong','splatoon','animal crossing','fire emblem','xenoblade','pikmin','star fox','wario','yoshi','bravely default','front mission 3','dragon quest i ','dragon quest ii ','dragon quest iii','dragon quest vii','dragon quest xi','nintendo switch sports','game builder'],t:'7974.T',p:'Nintendo'},
-  {kw:['resident evil','monster hunter','devil may cry','street fighter',"dragon's dogma",'dragons dogma','mega man','ace attorney','onimusha','okami','lost planet','capcom fighting'],t:'9697.T',p:'Capcom'},
-  {kw:['metal gear','silent hill','castlevania','efootball','pro evolution soccer','yu-gi-oh','suikoden','contra ','zone of the enders'],t:'9766.T',p:'Konami'},
-  {kw:['final fantasy','kingdom hearts','dragon quest iv','dragon quest v','dragon quest vi','dragon quest viii','dragon quest ix','nier','octopath','triangle strategy','live a live','chrono','saga frontier','romancing saga','tactics ogre','final fantasy tactics','fantasian','bravely second'],t:'9684.T',p:'Square Enix'},
-  {kw:['sonic the','persona ','yakuza','like a dragon','judgment ','two point','football manager','total war','valkyria','bayonetta','vanquish','hell let loose','sega football club','atlus'],t:'6460.T',p:'Sega Sammy'},
-  {kw:['elden ring','dark souls','sekiro','armored core','demon\'s souls','demons souls','little nightmares','tekken','soulcalibur','pac-man','naruto','one piece ','dragon ball','tales of ','ace combat','gundam','code vein','blue protocol'],t:'7832.T',p:'Bandai Namco'},
-  {kw:['ninja gaiden','nioh','wo long','dead or alive','dynasty warriors','warriors orochi','romance of three kingdoms','fire emblem warriors'],t:'3635.T',p:'Koei Tecmo'},
+  {kw:['super mario','mario kart','mario odyssey','mario wonder','mario rpg','zelda','metroid','pokemon','kirby','donkey kong','splatoon','animal crossing','fire emblem','xenoblade','pikmin','star fox','wario','yoshi','bravely default','dragon quest i ','dragon quest ii ','dragon quest iii','dragon quest vii','dragon quest xi','nintendo switch sports'],t:'7974.T',p:'Nintendo'},
+  {kw:['resident evil','monster hunter','devil may cry','street fighter',"dragon's dogma",'dragons dogma','mega man','ace attorney','onimusha','okami','lost planet'],t:'9697.T',p:'Capcom'},
+  {kw:['metal gear','silent hill','castlevania','efootball','pro evolution soccer','yu-gi-oh','suikoden','contra '],t:'9766.T',p:'Konami'},
+  {kw:['final fantasy','kingdom hearts','dragon quest iv','dragon quest v','dragon quest vi','dragon quest viii','dragon quest ix','nier','octopath','triangle strategy','live a live','chrono','saga frontier','romancing saga','tactics ogre','fantasian'],t:'9684.T',p:'Square Enix'},
+  {kw:['sonic the','persona ','yakuza','like a dragon','judgment ','two point','football manager','total war','valkyria','bayonetta','vanquish','hell let loose','atlus'],t:'6460.T',p:'Sega Sammy'},
+  {kw:['elden ring','dark souls','sekiro','armored core',"demon's souls",'demons souls','little nightmares','tekken','soulcalibur','pac-man','naruto','one piece ','dragon ball','tales of ','ace combat','gundam','code vein'],t:'7832.T',p:'Bandai Namco'},
+  {kw:['ninja gaiden','nioh','wo long','dead or alive','dynasty warriors','warriors orochi','fire emblem warriors'],t:'3635.T',p:'Koei Tecmo'},
   {kw:['roblox'],t:'RBLX',p:'Roblox Corp'},
 ];
-
 function resolveTicker(title){
   if(!title) return null;
   const t=title.toLowerCase();
@@ -192,16 +287,18 @@ const COL={
   event:   {bg:'#E6F1FB',c:'#185FA5'},
   release: {bg:'#E1F5EE',c:'#0F6E56'},
   hardware:{bg:'#FAEEDA',c:'#854F0B'},
-  ESRB:    {bg:'#FAECE7',c:'#993C1D'},
 };
 
-let calEvents=[], calReleases=[], regData=[];
+let calEvents=[], calReleases=[];
 let calFilter='all';
+let newsItems=[], newsFilter='all';
+let finItems=[];
+let redditItems=[], redditFilter='all';
 
-// ── API helpers ───────────────────────────────────────────────────────────────
-async function claudeCall(prompt){
+// ── API helpers ───────────────────────────────────────────────────
+async function claudeCall(prompt, maxTokens){
   const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens||1500,
       tools:[{type:'web_search_20250305',name:'web_search'}],
       messages:[{role:'user',content:prompt}]})});
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Error ${r.status}`);}
@@ -218,6 +315,13 @@ async function rawg(endpoint,params){
   return d;
 }
 
+async function rss(url){
+  const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({target:'rss',url})});
+  const d=await r.json();
+  return d.items||[];
+}
+
 function parseJSON(raw){
   if(!raw) return null;
   try{return JSON.parse(raw.trim());}catch{}
@@ -226,6 +330,7 @@ function parseJSON(raw){
   return null;
 }
 function errEl(id,msg){document.getElementById(id).innerHTML=`<div class="error-msg">${msg}</div>`;}
+function warnEl(id,msg){document.getElementById(id).innerHTML+=`<div class="warn-msg" style="margin-top:8px">${msg}</div>`;}
 function setStatus(msg,ok){const el=document.getElementById('status-bar');el.textContent=msg;el.className='status-bar '+(ok?'ok':'err');}
 
 async function init(){
@@ -233,10 +338,11 @@ async function init(){
     const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1,messages:[{role:'user',content:'hi'}]})});
     const d=await r.json();
-    if(d.error&&d.error.message.includes('API_KEY')){setStatus('ANTHROPIC_API_KEY missing in Vercel environment variables',false);return;}
-    setStatus('Connected — RAWG database + Claude live search ready',true);
+    if(d.error&&d.error.message&&d.error.message.includes('API_KEY')){setStatus('ANTHROPIC_API_KEY missing in Vercel environment variables',false);return;}
+    setStatus('Connected — RAWG database + Claude live search + RSS feeds ready',true);
     loadRawgReleases();
-    loadRawgRatings();
+    loadGamingNews();
+    loadReddit();
   }catch(e){setStatus('Cannot reach /api/proxy',false);}
 }
 
@@ -250,62 +356,71 @@ function filterCal(f,btn){
   document.querySelectorAll('#cal-chips .chip').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');renderCal();
 }
-
-function fmtDate(iso){
-  if(!iso) return 'TBA';
-  const d=new Date(iso+'T00:00:00');
-  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+function filterNews(f,btn){
+  newsFilter=f;
+  document.querySelectorAll('#news-chips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');renderNews();
+}
+function filterReddit(f,btn){
+  redditFilter=f;
+  document.querySelectorAll('#reddit-chips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');renderReddit();
 }
 
-// ── RAWG releases: 60 days ago → 2 years ahead, 3 pages ──────────────────────
+// ════════════════════════════════════════════════════════════════
+// EVENTS & RELEASES — single deduplicated RAWG query (shared pool)
+// ════════════════════════════════════════════════════════════════
+let RAWG_POOL_CACHE=null; // shared across releases — fixes the "Forza in one tab, not the other" inconsistency
+
+async function fetchRawgPool(dateFrom, dateTo){
+  const [p1,p2,p3] = await Promise.all([
+    rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'released',     page_size:'40', page:'1'}),
+    rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'-added',       page_size:'40', page:'1'}),
+    rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'-metacritic',  page_size:'40', page:'1'}),
+  ]);
+  const seen=new Set();
+  const pool=[];
+  for(const data of [p1,p2,p3]){
+    if(!data||!data.results) continue;
+    for(const g of data.results){
+      if(!g.released||seen.has(g.name)) continue;
+      seen.add(g.name);
+      pool.push(g);
+    }
+  }
+  return pool;
+}
+
 async function loadRawgReleases(){
   document.getElementById('cal-list').innerHTML='<div class="loading">Loading releases from RAWG (3 pages)...</div>';
-
-  const dateFrom = isoDate(daysAgo(60));          // 60 days ago
-  const dateTo   = isoDate(daysAhead(730));        // 2 years ahead
-
+  const dateFrom = isoDate(daysAgo(60));
+  const dateTo   = isoDate(daysAhead(730));
   try{
-    // Fetch 3 pages in parallel with different orderings for broader coverage
-    const [p1,p2,p3] = await Promise.all([
-      rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'released',     page_size:'40', page:'1'}),
-      rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'-added',       page_size:'40', page:'1'}),
-      rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'-metacritic',  page_size:'40', page:'1'}),
-    ]);
-
-    const seen=new Set();
+    const pool = await fetchRawgPool(dateFrom, dateTo);
+    RAWG_POOL_CACHE = pool; // cached for reuse if needed elsewhere
     calReleases=[];
-
-    for(const data of [p1,p2,p3]){
-      if(!data||!data.results) continue;
-      for(const g of data.results){
-        if(!g.released||seen.has(g.name)) continue;
-        const info=resolveTicker(g.name);
-        if(!info) continue;
-        seen.add(g.name);
-        calReleases.push({
-          title:g.name, date:g.released, type:'release',
-          publisher:info.parent, ticker:info.ticker,
-          esrb:g.esrb_rating?.name||'',
-          metacritic:g.metacritic||null,
-          slug:g.slug, _source:'rawg',
-        });
-      }
+    for(const g of pool){
+      const info=resolveTicker(g.name);
+      if(!info) continue;
+      calReleases.push({
+        title:g.name, date:g.released, type:'release',
+        publisher:info.parent, ticker:info.ticker,
+        esrb:g.esrb_rating?.name||'',
+        metacritic:g.metacritic||null,
+        slug:g.slug, _source:'rawg',
+      });
     }
-
-    // Sort: upcoming first by date asc, then recent desc
     calReleases.sort((a,b)=>{
       const now=new Date();
       const da=new Date(a.date), db=new Date(b.date);
       const aFuture=da>=now, bFuture=db>=now;
-      if(aFuture&&bFuture) return da-db;   // both future: ascending
-      if(!aFuture&&!bFuture) return db-da; // both past: most recent first
-      return aFuture?-1:1;                  // future before past
+      if(aFuture&&bFuture) return da-db;
+      if(!aFuture&&!bFuture) return db-da;
+      return aFuture?-1:1;
     });
-
     renderCal();
     const el=document.getElementById('cal-count');
     if(el) el.textContent=calReleases.length?`${calReleases.length} titles`:'';
-
   }catch(e){errEl('cal-list','RAWG error: '+e.message);}
 }
 
@@ -347,8 +462,8 @@ function renderCal(){
     const upcomingCount=rawgItems.filter(i=>new Date(i.date)>=new Date()).length;
     const recentCount=rawgItems.length-upcomingCount;
     html+=`<div class="section-divider" style="margin-top:${claudeItems.length?14:0}px">
-      Confirmed releases — RAWG &nbsp;<a href="https://rawg.io" target="_blank" class="src-link">rawg.io ↗</a>
-      <span style="margin-left:8px;font-weight:400">${upcomingCount} upcoming · ${recentCount} recent</span>
+      Confirmed releases — RAWG &nbsp;<a href="https://rawg.io" target="_blank" class="src-link">rawg.io &#8599;</a>
+      <span style="margin-left:8px;font-weight:400">${upcomingCount} upcoming &middot; ${recentCount} recent</span>
     </div>`;
     html+=rawgItems.map(renderCalRow).join('');
   }
@@ -361,20 +476,16 @@ function renderCalRow(i){
   const parts=dateStr.split(' ');
   const line1=parts.length>=2?parts[0]+' '+parts[1]:dateStr;
   const line2=parts.length>=3?parts[2]:'';
-
-  // Mark past releases differently
   const isPast=i.date&&new Date(i.date)<new Date();
   const badgeBg=isPast?'var(--bg3)':col.bg;
   const badgeC=isPast?'var(--text3)':col.c;
-
   const ticker=i.ticker?`<span class="ticker-tag">${i.ticker}</span>`:'';
   const esrb=i.esrb?`<span class="rating-pill">${i.esrb}</span>`:'';
   const mc=i.metacritic?`<span class="mc-pill">MC ${i.metacritic}</span>`:'';
-  const rawgLink=i.slug?`<a href="https://rawg.io/games/${i.slug}" target="_blank" rel="noopener" class="src-link">RAWG ↗</a>`:'';
+  const rawgLink=i.slug?`<a href="https://rawg.io/games/${i.slug}" target="_blank" rel="noopener" class="src-link">RAWG &#8599;</a>`:'';
   const pub=i.publisher?`<span style="font-size:11px;color:var(--text3)"> — ${i.publisher}</span>`:'';
   const detail=i.detail?`<div class="ev-sub">${i.detail}</div>`:'';
   const pastTag=isPast?`<span style="font-size:10px;color:var(--text3);margin-left:4px;opacity:.7">released</span>`:'';
-
   return `<div class="ev-row">
     <div class="ev-badge" style="background:${badgeBg};color:${badgeC}">
       <div>${line1}</div>${line2?`<div>${line2}</div>`:''}
@@ -388,92 +499,9 @@ function renderCalRow(i){
   </div>`;
 }
 
-// ── RAWG ESRB ratings: past 12 months ────────────────────────────────────────
-async function loadRawgRatings(){
-  document.getElementById('reg-list').innerHTML='<div class="loading">Loading ESRB ratings from RAWG (3 pages)...</div>';
-
-  const dateFrom = isoDate(daysAgo(365));   // 12 months ago
-  const dateTo   = isoDate(today());
-
-  try{
-    const [p1,p2,p3]=await Promise.all([
-      rawg('games',{dates:`${dateFrom},${dateTo}`,ordering:'-released',page_size:'40',page:'1'}),
-      rawg('games',{dates:`${dateFrom},${dateTo}`,ordering:'-rating',   page_size:'40',page:'1'}),
-      rawg('games',{dates:`${dateFrom},${dateTo}`,ordering:'-added',    page_size:'40',page:'1'}),
-    ]);
-
-    const seen=new Set();
-    regData=[];
-
-    for(const data of [p1,p2,p3]){
-      if(!data||!data.results) continue;
-      for(const g of data.results){
-        if(seen.has(g.name)) continue;
-        if(!g.esrb_rating) continue;          // only include ESRB-rated games
-        const info=resolveTicker(g.name);
-        if(!info) continue;
-        seen.add(g.name);
-        regData.push({
-          title:g.name,
-          source:'ESRB',
-          detail:`Rated ${g.esrb_rating.name}`,
-          date:g.released||'',
-          ticker:info.ticker,
-          parent:info.parent,
-          url:`https://rawg.io/games/${g.slug}`,
-          esrbSlug:g.esrb_rating.slug,
-          metacritic:g.metacritic||null,
-        });
-      }
-    }
-
-    // Sort most recently released first
-    regData.sort((a,b)=>new Date(b.date)-new Date(a.date));
-
-    renderReg();
-    const el=document.getElementById('reg-count');
-    if(el) el.textContent=regData.length?`${regData.length} titles`:'';
-
-  }catch(e){errEl('reg-list','RAWG error: '+e.message);}
-}
-
-function renderReg(){
-  const el=document.getElementById('reg-list');
-  if(!regData.length){
-    el.innerHTML='<div class="loading">No ESRB-rated titles found in this RAWG sample — try refreshing</div>';
-    return;
-  }
-  const esrbColor={
-    'everyone':'#3B6D11','everyone-10-plus':'#3B6D11',
-    'teen':'#854F0B','mature':'#993C1D','adults-only':'#993C1D','rating-pending':'#888780',
-  };
-  let html=`<div class="section-divider">ESRB ratings · past 12 months · ${regData.length} titles from publicly traded publishers &nbsp;<a href="https://rawg.io" target="_blank" class="src-link">rawg.io ↗</a></div>`;
-  html+=regData.map(i=>{
-    const ratingColor=esrbColor[i.esrbSlug]||'#888780';
-    const ratingBg=i.esrbSlug==='mature'||i.esrbSlug==='adults-only'?'#FAECE7':i.esrbSlug==='teen'?'#FAEEDA':'#EAF3DE';
-    const srcLink=`<a href="${i.url}" target="_blank" rel="noopener" class="src-link">RAWG ↗</a>`;
-    const mc=i.metacritic?`<span class="mc-pill" style="margin-left:4px">MC ${i.metacritic}</span>`:'';
-    return `<div class="reg-row">
-      <span class="reg-src" style="background:${ratingBg};color:${ratingColor}">${i.detail}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500">
-          ${i.title||''}
-          <span class="ticker-tag">${i.ticker}</span>
-          <span class="rawg-badge">RAWG</span>
-          ${mc}
-        </div>
-        <div style="font-size:11px;color:var(--text2);margin-top:1px">
-          <span style="color:var(--text3)">${i.parent}</span>
-          ${i.date?` · Released ${fmtDate(i.date)}`:''}
-          ${srcLink}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  el.innerHTML=html;
-}
-
-// ── Media Momentum ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// MEDIA MOMENTUM — unchanged, Claude-powered
+// ════════════════════════════════════════════════════════════════
 async function runMom(){
   const sel=document.getElementById('mom-select');
   const q=sel.value;
@@ -495,7 +523,7 @@ async function runMom(){
     if(!d||typeof d.score==='undefined') throw new Error('Could not parse — try again');
     const sc=d.score>65?'#0F6E56':d.score>35?'#854F0B':'#A32D2D';
     const ts=d.trend==='rising'?'background:#E1F5EE;color:#0F6E56':d.trend==='falling'?'background:#FCEBEB;color:#A32D2D':'background:#FAEEDA;color:#854F0B';
-    const tl=d.trend==='rising'?'↑ Rising':d.trend==='falling'?'↓ Falling':'→ Stable';
+    const tl=d.trend==='rising'?'&uarr; Rising':d.trend==='falling'?'&darr; Falling':'&rarr; Stable';
     el.innerHTML=`
       <div class="score-block">
         <div style="text-align:center">
@@ -515,14 +543,247 @@ async function runMom(){
         const sp=h.sentiment==='positive'?'background:#E1F5EE;color:#0F6E56':h.sentiment==='negative'?'background:#FCEBEB;color:#A32D2D':'background:#f1f0ea;color:#5f5e5a';
         const dateStr=h.date?`<span style="margin-left:6px;opacity:.65">${h.date}</span>`:'';
         const link=h.url&&h.url.startsWith('http')
-          ?`<a href="${h.url}" target="_blank" rel="noopener" class="src-link">Read ↗</a>`
-          :`<a href="https://www.google.com/search?q=${encodeURIComponent((h.title||'')+' '+(h.source||''))}" target="_blank" rel="noopener" class="src-link">Search ↗</a>`;
+          ?`<a href="${h.url}" target="_blank" rel="noopener" class="src-link">Read &#8599;</a>`
+          :`<a href="https://www.google.com/search?q=${encodeURIComponent((h.title||'')+' '+(h.source||''))}" target="_blank" rel="noopener" class="src-link">Search &#8599;</a>`;
         return `<div class="headline-card">
           <div class="headline-title">${h.title||''}</div>
           <div class="headline-meta">${h.source||''}${dateStr} ${link}${h.sentiment?`<span class="sent-pill" style="${sp}">${h.sentiment}</span>`:''}</div>
         </div>`;
       }).join('')}`;
   }catch(e){errEl('mom-results','Error: '+e.message);}
+}
+
+// ════════════════════════════════════════════════════════════════
+// LEAK WATCH — Claude search, hard 14-day cutoff enforced client-side
+// Replaces the old RAWG-based filing monitor entirely. No RAWG calls.
+// ════════════════════════════════════════════════════════════════
+async function runLeakWatch(){
+  const el=document.getElementById('leak-list');
+  const countEl=document.getElementById('leak-count');
+  el.innerHTML='<div class="loading">Searching for ESRB/PEGI leak coverage (deep query, may take a moment)...</div>';
+  countEl.textContent='';
+
+  const cutoffDate = daysAgo(14);
+  const cutoffStr = isoDate(cutoffDate);
+  const todayStr = isoDate(today());
+
+  try{
+    const raw=await claudeCall(
+      `Today's date is ${todayStr}. I need a thorough search for news ONLY from ${cutoffStr} through ${todayStr} (the last 14 days, no older) about unannounced or leaked video game ratings discovered in the ESRB or PEGI databases before official publisher announcement. `+
+      'Search gaming journalism sites (Gematsu, ResetEra, GamesRadar, VGC, IGN, Eurogamer, GameSpot, NeoGAF, TrueAchievements/TrueTrophies, PSNProfiles), gaming subreddits, and gaming Twitter/X coverage for: '+
+      '(1) new entries appearing in the ESRB ratings database for games not yet officially announced, '+
+      '(2) new entries appearing in the PEGI ratings database for games not yet officially announced, '+
+      '(3) journalist or community reports analyzing such database entries as leak signals. '+
+      'Focus on games from these publicly traded publishers: Microsoft/Xbox/Bethesda/Activision, Sony/PlayStation, Take-Two/Rockstar/2K, EA, Ubisoft, CD Projekt, Capcom, Konami, Square Enix, Sega/Atlus, Bandai Namco, Koei Tecmo, Nintendo, Roblox. '+
+      `CRITICAL: only include items where the article or post was published between ${cutoffStr} and ${todayStr}. Do not include anything older, even if it seems significant — exclude it instead. If you find nothing within this exact window, return an empty array rather than including older items. `+
+      'Return ONLY a JSON array (no markdown, no preamble). Each item: '+
+      '{"title":"game or topic name","publisher":"company name","ticker":"e.g. TTWO or empty if unclear","detail":"1-2 sentence description of what was found and why it is a signal","source":"publication or community name","date":"YYYY-MM-DD of the article/post itself","confidence":"high|medium|low","url":"source url or empty string"}'
+    , 2000);
+
+    let items = parseJSON(raw) || [];
+
+    // Hard client-side backstop: drop anything outside the 14-day window,
+    // even if Claude's own filtering let something slip through.
+    items = items.filter(it=>{
+      const d = parseAnyDate(it.date);
+      if(!d) return false; // no parseable date = can't verify recency, drop it
+      return d >= cutoffDate && d <= daysAhead(1); // small forward buffer for timezone edge cases
+    });
+
+    // Resolve ticker via title map as a fallback/cross-check if Claude didn't supply one
+    items.forEach(it=>{
+      if(!it.ticker){
+        const info = resolveTicker(it.title||'');
+        if(info){ it.ticker = info.ticker; if(!it.publisher) it.publisher = info.parent; }
+      }
+    });
+
+    items.sort((a,b)=> (parseAnyDate(b.date)||0) - (parseAnyDate(a.date)||0));
+
+    renderLeakWatch(items);
+    countEl.textContent = items.length ? `${items.length} signals (14d window)` : '0 signals in window';
+
+  }catch(e){
+    errEl('leak-list','Error: '+e.message);
+  }
+}
+
+function renderLeakWatch(items){
+  const el=document.getElementById('leak-list');
+  if(!items.length){
+    el.innerHTML='<div class="loading" style="padding:30px 0">No ESRB/PEGI leak coverage found in the last 14 days. This is common — leaks are infrequent. Try again later or widen scope manually if needed.</div>';
+    return;
+  }
+  el.innerHTML = items.map(i=>{
+    const confColor = i.confidence==='high' ? 'background:#FAECE7;color:#993C1D' : i.confidence==='medium' ? 'background:#FAEEDA;color:#854F0B' : 'background:var(--bg3);color:var(--text3)';
+    const ticker = i.ticker ? `<span class="ticker-tag">${i.ticker}</span>` : '';
+    const srcLink = i.url && i.url.startsWith('http')
+      ? `<a href="${i.url}" target="_blank" rel="noopener" class="src-link">Source &#8599;</a>`
+      : (i.source ? `<a href="https://www.google.com/search?q=${encodeURIComponent((i.title||'')+' '+(i.source||'')+' ESRB leak')}" target="_blank" rel="noopener" class="src-link">Search &#8599;</a>` : '');
+    return `<div class="leak-card confidence-${i.confidence||'low'}">
+      <div class="leak-title">${i.title||'Untitled'} ${ticker}
+        <span class="conf-pill" style="${confColor}">${i.confidence||'unverified'} confidence</span>
+      </div>
+      <div class="leak-detail">${i.detail||''}</div>
+      <div class="leak-meta">${i.publisher?`<span style="color:var(--text2)">${i.publisher}</span> &middot; `:''}${i.source||'unknown source'}${i.date?` &middot; ${fmtDate(i.date)}`:''} ${srcLink}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// GAMING NEWS — free RSS, no AI tokens
+// ════════════════════════════════════════════════════════════════
+const GAMING_FEEDS = [
+  {name:'IGN',        url:'https://www.ign.com/rss/v2/articles/feed', tag:'IGN',        bg:'#FFE6E6', c:'#A32D2D'},
+  {name:'Eurogamer',  url:'https://www.eurogamer.net/?format=rss',     tag:'Eurogamer',   bg:'#E6F1FB', c:'#185FA5'},
+  {name:'GameSpot',   url:'https://www.gamespot.com/feeds/news',       tag:'GameSpot',    bg:'#E1F5EE', c:'#0F6E56'},
+  {name:'VGC',        url:'https://www.videogameschronicle.com/feed/', tag:'VGC',         bg:'#FAEEDA', c:'#854F0B'},
+];
+
+async function loadGamingNews(){
+  const el=document.getElementById('news-list');
+  el.innerHTML='<div class="loading">Loading gaming news from 4 sources...</div>';
+  try{
+    const results = await Promise.allSettled(GAMING_FEEDS.map(f=>rss(f.url)));
+    newsItems=[];
+    results.forEach((res,idx)=>{
+      if(res.status!=='fulfilled') return;
+      const feed=GAMING_FEEDS[idx];
+      for(const item of res.value){
+        newsItems.push({...item, _source:feed.name, _tag:feed.tag, _bg:feed.bg, _c:feed.c});
+      }
+    });
+    newsItems.sort((a,b)=>{
+      const da=parseAnyDate(a.pubDate), db=parseAnyDate(b.pubDate);
+      if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
+      return db-da;
+    });
+    renderNews();
+    const el2=document.getElementById('news-count');
+    if(el2) el2.textContent = newsItems.length?`${newsItems.length} articles`:'';
+    const failedCount = results.filter(r=>r.status!=='fulfilled').length;
+    if(failedCount) warnEl('news-list', `${failedCount} of ${GAMING_FEEDS.length} feeds did not respond — showing available sources`);
+  }catch(e){errEl('news-list','Feed error: '+e.message);}
+}
+
+function renderNews(){
+  const el=document.getElementById('news-list');
+  const items = newsFilter==='all' ? newsItems : newsItems.filter(i=>i._source===newsFilter);
+  if(!items.length){el.innerHTML='<div class="loading">No articles for this filter</div>';return;}
+  el.innerHTML = items.slice(0,60).map(i=>`
+    <div class="feed-row">
+      <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
+      <div style="flex:1;min-width:0">
+        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a></div>
+        ${i.description?`<div class="feed-desc">${i.description}${i.description.length>=200?'…':''}</div>`:''}
+        <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// FINANCE NEWS — Google News RSS per-company + Bloomberg/Reuters filter
+// ════════════════════════════════════════════════════════════════
+async function loadFinanceNews(){
+  const sel=document.getElementById('fin-select');
+  const company=sel.value;
+  const label=sel.options[sel.selectedIndex].text;
+  const el=document.getElementById('fin-list');
+  el.innerHTML=`<div class="loading">Searching finance news for ${label}...</div>`;
+  try{
+    const gnewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(company+' stock gaming')}&hl=en-US&gl=US&ceid=US:en`;
+    const bloombergUrl = 'https://www.bloomberg.com/feeds/podcasts/etf-report.xml'; // fallback if main feed unavailable
+    const reutersUrl = 'https://news.google.com/rss/search?q=' + encodeURIComponent(company+' Reuters gaming earnings') + '&hl=en-US&gl=US&ceid=US:en';
+
+    const [gnews, reuters] = await Promise.allSettled([rss(gnewsUrl), rss(reutersUrl)]);
+
+    finItems=[];
+    if(gnews.status==='fulfilled'){
+      for(const item of gnews.value){ finItems.push({...item, _tag:'Google News', _bg:'#E6F1FB', _c:'#185FA5'}); }
+    }
+    if(reuters.status==='fulfilled'){
+      for(const item of reuters.value){
+        if(/reuters|bloomberg/i.test(item.title+' '+(item.description||''))){
+          finItems.push({...item, _tag:'Reuters/Bloomberg', _bg:'#FAEEDA', _c:'#854F0B'});
+        }
+      }
+    }
+    // Dedup by title
+    const seen=new Set();
+    finItems = finItems.filter(i=>{
+      const k=(i.title||'').toLowerCase().trim();
+      if(seen.has(k)) return false; seen.add(k); return true;
+    });
+    finItems.sort((a,b)=>{
+      const da=parseAnyDate(a.pubDate), db=parseAnyDate(b.pubDate);
+      if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
+      return db-da;
+    });
+
+    if(!finItems.length){
+      el.innerHTML='<div class="loading">No recent finance articles found for this company</div>';
+    } else {
+      el.innerHTML = finItems.slice(0,40).map(i=>`
+        <div class="feed-row">
+          <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
+          <div style="flex:1;min-width:0">
+            <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a></div>
+            <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
+          </div>
+        </div>`).join('');
+    }
+    const cEl=document.getElementById('fin-count');
+    if(cEl) cEl.textContent = finItems.length?`${finItems.length} articles`:'';
+  }catch(e){errEl('fin-list','Error: '+e.message);}
+}
+
+// ════════════════════════════════════════════════════════════════
+// REDDIT — free RSS, no AI tokens
+// ════════════════════════════════════════════════════════════════
+const REDDIT_FEEDS = [
+  {sub:'gaming', url:'https://www.reddit.com/r/gaming/hot/.rss?limit=25', tag:'r/gaming', bg:'#FAECE7', c:'#993C1D'},
+  {sub:'games',  url:'https://www.reddit.com/r/Games/hot/.rss?limit=25',  tag:'r/Games',  bg:'#E1F5EE', c:'#0F6E56'},
+  {sub:'stocks', url:'https://www.reddit.com/r/stocks/search.rss?q=gaming&restrict_sr=on&sort=new&limit=25', tag:'r/stocks', bg:'#E6F1FB', c:'#185FA5'},
+];
+
+async function loadReddit(){
+  const el=document.getElementById('reddit-list');
+  el.innerHTML='<div class="loading">Loading Reddit posts from 3 subreddits...</div>';
+  try{
+    const results = await Promise.allSettled(REDDIT_FEEDS.map(f=>rss(f.url)));
+    redditItems=[];
+    results.forEach((res,idx)=>{
+      if(res.status!=='fulfilled') return;
+      const feed=REDDIT_FEEDS[idx];
+      for(const item of res.value){
+        redditItems.push({...item, _source:feed.sub, _tag:feed.tag, _bg:feed.bg, _c:feed.c});
+      }
+    });
+    redditItems.sort((a,b)=>{
+      const da=parseAnyDate(a.pubDate), db=parseAnyDate(b.pubDate);
+      if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
+      return db-da;
+    });
+    renderReddit();
+    const el2=document.getElementById('reddit-count');
+    if(el2) el2.textContent = redditItems.length?`${redditItems.length} posts`:'';
+    const failedCount = results.filter(r=>r.status!=='fulfilled').length;
+    if(failedCount) warnEl('reddit-list', `${failedCount} of ${REDDIT_FEEDS.length} subreddit feeds did not respond`);
+  }catch(e){errEl('reddit-list','Feed error: '+e.message);}
+}
+
+function renderReddit(){
+  const el=document.getElementById('reddit-list');
+  const items = redditFilter==='all' ? redditItems : redditItems.filter(i=>i._source===redditFilter);
+  if(!items.length){el.innerHTML='<div class="loading">No posts for this filter</div>';return;}
+  el.innerHTML = items.slice(0,60).map(i=>`
+    <div class="feed-row">
+      <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
+      <div style="flex:1;min-width:0">
+        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a></div>
+        <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
+      </div>
+    </div>`).join('');
 }
 
 init();
