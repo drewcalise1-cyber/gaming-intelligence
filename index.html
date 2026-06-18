@@ -194,8 +194,9 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
         <button class="btn" onclick="loadReddit()">Refresh</button>
       </div>
       <p class="note">
-        Reddit search (not generic "hot" feed) scoped per-publisher &middot; filtered to posts mentioning
-        a publicly traded publisher AND a financial-relevance term &middot; free, no AI tokens
+        Reddit search via 2 batched queries (publisher names + connected franchise titles) &middot; filtered to posts
+        mentioning a publicly traded publisher (directly, or via a franchise it owns e.g. "Monster Hunter" &rarr; Capcom)
+        AND a financial-relevance term &middot; free, no AI tokens
       </p>
       <div id="reddit-list"><div class="loading">Loading Reddit posts...</div></div>
     </div>
@@ -249,6 +250,41 @@ const TITLE_MAP = [
   {kw:['ninja gaiden','nioh','wo long','dead or alive','dynasty warriors','warriors orochi','fire emblem warriors'],t:'3635.T',p:'Koei Tecmo'},
   {kw:['roblox'],t:'RBLX',p:'Roblox Corp'},
 ];
+
+// ── Dynamic title map ────────────────────────────────────────────
+// TITLE_MAP above is static and requires a manual edit for every new game.
+// This closes that gap: whenever a RAWG-sourced title doesn't match TITLE_MAP,
+// the dashboard makes one follow-up call to RAWG's single-game detail endpoint
+// (which DOES include a real `publishers` field, unlike the list endpoint),
+// and if that publisher matches one of our 15 tracked companies, the mapping
+// is added here automatically. No manual keyword-writing needed going forward.
+// Session-scoped (resets on page reload) — see RAWG_PUBLISHER_TO_TICKER below
+// for the lookup table connecting RAWG's publisher names to tickers.
+let DYNAMIC_TITLE_MAP = []; // same shape as TITLE_MAP entries: {kw:[...], t, p}
+const DYNAMIC_LOOKUP_CACHE = new Set(); // titles already checked, to avoid re-querying every refresh
+const DYNAMIC_LOOKUP_FAILED = new Set(); // titles checked and found NOT to match any tracked publisher
+
+// Maps RAWG's exact publisher name strings (from the detail endpoint) to our tickers.
+// This list mirrors PUBLISHERS below but matches RAWG's specific naming conventions,
+// which sometimes differ slightly from common usage (checked against live RAWG data).
+const RAWG_PUBLISHER_TO_TICKER = {
+  'microsoft studios':'MSFT','xbox game studios':'MSFT','bethesda softworks':'MSFT','activision':'MSFT','activision blizzard':'MSFT',
+  'sony interactive entertainment':'SONY','sony computer entertainment':'SONY',
+  'take-two interactive':'TTWO','rockstar games':'TTWO','2k games':'TTWO','2k':'TTWO',
+  'electronic arts':'EA','ea':'EA',
+  'roblox corporation':'RBLX',
+  'ubisoft entertainment':'UBI.PA','ubisoft':'UBI.PA',
+  'cd projekt':'CDR.WA','cd projekt red':'CDR.WA',
+  'embracer group':'EMBRAC-B.ST','thq nordic':'EMBRAC-B.ST',
+  'nintendo':'7974.T',
+  'capcom':'9697.T','capcom co':'9697.T',
+  'konami':'9766.T','konami digital entertainment':'9766.T',
+  'square enix':'9684.T',
+  'sega':'6460.T','atlus':'6460.T','sega games':'6460.T',
+  'bandai namco entertainment':'7832.T','bandai namco':'7832.T','namco bandai games':'7832.T',
+  'koei tecmo games':'3635.T','koei tecmo':'3635.T','tecmo koei':'3635.T',
+};
+
 function resolveTicker(title){
   if(!title) return null;
   const t=title.toLowerCase();
@@ -257,7 +293,47 @@ function resolveTicker(title){
       if(t.includes(kw)) return {ticker:entry.t,parent:entry.p};
     }
   }
+  for(const entry of DYNAMIC_TITLE_MAP){
+    for(const kw of entry.kw){
+      if(t.includes(kw)) return {ticker:entry.t,parent:entry.p};
+    }
+  }
   return null;
+}
+
+// Looks up a single game's real publisher via RAWG's detail endpoint and, if it
+// matches a tracked company, adds it to DYNAMIC_TITLE_MAP. Returns true if a new
+// mapping was added, false otherwise (already mapped, already checked-and-failed,
+// or publisher not tracked).
+async function tryDynamicResolve(gameTitle, gameSlug){
+  const key = gameTitle.toLowerCase().trim();
+  if(resolveTicker(gameTitle)) return false; // already resolvable, nothing to do
+  if(DYNAMIC_LOOKUP_CACHE.has(key) || DYNAMIC_LOOKUP_FAILED.has(key)) return false; // already checked this session
+  DYNAMIC_LOOKUP_CACHE.add(key);
+
+  try{
+    const detail = await rawg('games/'+gameSlug, {});
+    const pubs = detail.publishers || [];
+    for(const p of pubs){
+      const pubKey = (p.name||'').toLowerCase().trim();
+      const ticker = RAWG_PUBLISHER_TO_TICKER[pubKey];
+      if(ticker){
+        const parentEntry = PUBLISHERS.find(x=>x.ticker===ticker);
+        const parentLabel = parentEntry ? parentEntry.label.replace(/\s*\([^)]*\)\s*$/,'').trim() : p.name;
+        // Add the game's own title as a new keyword so future mentions of it
+        // (in Reddit posts, RSS headlines, etc.) also resolve correctly.
+        DYNAMIC_TITLE_MAP.push({kw:[key], t:ticker, p:parentLabel});
+        return true;
+      }
+    }
+  }catch(e){
+    // RAWG detail lookup failed (rate limit, network, etc.) — don't mark as permanently
+    // failed, just skip silently this round and allow retry on next load.
+    DYNAMIC_LOOKUP_CACHE.delete(key);
+    return false;
+  }
+  DYNAMIC_LOOKUP_FAILED.add(key);
+  return false;
 }
 
 // ── Publisher dictionary: single source of truth for ALL company dropdowns
@@ -284,7 +360,7 @@ const PUBLISHERS = [
 
 const FIN_RELEVANCE_TERMS = [
   'earnings','revenue','profit','loss','quarterly','q1','q2','q3','q4','fiscal',
-  'sales','units sold','launch','release date','delay','delayed','postpone',
+  'sales','sale','units sold','record','records','launch','release date','delay','delayed','postpone',
   'lawsuit','sue','sued','litigation','acquisition','acquire','merger','buyout',
   'layoff','layoffs','restructur','job cuts','stock','shares','share price',
   'guidance','forecast','outlook','analyst','price target','ipo','dividend',
@@ -306,6 +382,16 @@ function matchPublisher(text){
   for(const m of PUB_MATCHERS){
     if(m.regex.test(text)) return m;
   }
+  return null;
+}
+// Unified matcher: tries company-name mention first (matchPublisher), then falls back
+// to franchise-title mention via TITLE_MAP (resolveTicker) — e.g. "Monster Hunter Wilds"
+// resolves to Capcom even with zero mention of the word "Capcom" itself.
+function matchPublisherOrTitle(text){
+  const direct = matchPublisher(text);
+  if(direct) return {ticker:direct.ticker, label:direct.label, via:'company-name'};
+  const viaTitle = resolveTicker(text);
+  if(viaTitle) return {ticker:viaTitle.ticker, label:viaTitle.parent, via:'franchise-title'};
   return null;
 }
 function isFinanciallyRelevant(text){
@@ -436,29 +522,56 @@ async function loadRawgReleases(){
   const dateTo   = isoDate(daysAhead(730));
   try{
     const pool = await fetchRawgPool(dateFrom, dateTo);
-    calReleases=[];
-    for(const g of pool){
-      const info=resolveTicker(g.name);
-      if(!info) continue;
-      calReleases.push({
-        title:g.name, date:g.released, type:'release',
-        publisher:info.parent, ticker:info.ticker,
-        esrb:g.esrb_rating?.name||'',
-        metacritic:g.metacritic||null,
-        slug:g.slug, _source:'rawg',
+
+    function buildCalReleasesFromPool(){
+      const list=[];
+      for(const g of pool){
+        const info=resolveTicker(g.name);
+        if(!info) continue;
+        list.push({
+          title:g.name, date:g.released, type:'release',
+          publisher:info.parent, ticker:info.ticker,
+          esrb:g.esrb_rating?.name||'',
+          metacritic:g.metacritic||null,
+          slug:g.slug, _source:'rawg',
+        });
+      }
+      list.sort((a,b)=>{
+        const now=new Date();
+        const da=new Date(a.date), db=new Date(b.date);
+        const aFuture=da>=now, bFuture=db>=now;
+        if(aFuture&&bFuture) return da-db;
+        if(!aFuture&&!bFuture) return db-da;
+        return aFuture?-1:1;
       });
+      return list;
     }
-    calReleases.sort((a,b)=>{
-      const now=new Date();
-      const da=new Date(a.date), db=new Date(b.date);
-      const aFuture=da>=now, bFuture=db>=now;
-      if(aFuture&&bFuture) return da-db;
-      if(!aFuture&&!bFuture) return db-da;
-      return aFuture?-1:1;
-    });
+
+    // First pass: render immediately with whatever the static + already-known dynamic
+    // map can resolve, so the UI isn't blocked waiting on detail-endpoint calls.
+    calReleases = buildCalReleasesFromPool();
     renderCal();
     const el=document.getElementById('cal-count');
     if(el) el.textContent=calReleases.length?`${calReleases.length} titles`:'';
+
+    // Second pass: for titles that didn't match, try resolving via RAWG's detail
+    // endpoint (real publisher data). Capped at 15 per load to keep this fast and
+    // avoid hammering RAWG — new titles are typically a small fraction of the pool.
+    const unmatched = pool.filter(g => !resolveTicker(g.name)).slice(0,15);
+    if(unmatched.length){
+      let foundAny=false;
+      for(const g of unmatched){
+        const added = await tryDynamicResolve(g.name, g.slug);
+        if(added) foundAny=true;
+      }
+      if(foundAny){
+        calReleases = buildCalReleasesFromPool();
+        renderCal();
+        if(el) el.textContent=calReleases.length?`${calReleases.length} titles`:'';
+        const dynCount = DYNAMIC_TITLE_MAP.length;
+        if(dynCount) warnEl('cal-list', `${dynCount} title${dynCount===1?'':'s'} resolved automatically via live publisher lookup this session (not yet in the static keyword list)`);
+      }
+    }
   }catch(e){errEl('cal-list','RAWG error: '+e.message);}
 }
 
@@ -688,13 +801,16 @@ async function loadGamingNews(){
       }
     });
 
-    // Filter: must mention a publicly traded publisher AND a financial-relevance term
+    // Filter: must mention a publicly traded publisher (directly, or via a franchise it owns)
+    // AND a financial-relevance term. Same matching logic as Reddit and Finance News —
+    // one consistent rule across every section.
     newsItemsFiltered = newsItemsRaw.filter(item=>{
       const text = (item.title||'') + ' ' + (item.description||'');
-      const pub = matchPublisher(text);
+      const pub = matchPublisherOrTitle(text);
       if(!pub) return false;
       if(!isFinanciallyRelevant(text)) return false;
       item._matchedPublisher = pub.ticker;
+      item._matchedVia = pub.via;
       return true;
     });
 
@@ -728,15 +844,20 @@ function renderNews(){
       : '<div class="loading">No matching articles for this publisher in the current feed batch. Try "All publishers" or refresh — feeds rotate frequently.</div>';
     return;
   }
-  el.innerHTML = visible.slice(0,60).map(i=>`
+  el.innerHTML = visible.slice(0,60).map(i=>{
+    const viaTag = i._matchedVia==='franchise-title'
+      ? `<span class="feed-match-tag" style="background:#FAEEDA;color:#854F0B" title="Matched via franchise title, not company name">via title</span>`
+      : '';
+    return `
     <div class="feed-row">
       <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
       <div style="flex:1;min-width:0">
-        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a><span class="feed-match-tag">${i._matchedPublisher}</span></div>
+        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a><span class="feed-match-tag">${i._matchedPublisher}</span>${viaTag}</div>
         ${i.description?`<div class="feed-desc">${i.description}${i.description.length>=200?'…':''}</div>`:''}
         <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -748,25 +869,41 @@ async function loadFinanceNews(){
   const ticker=sel.options[sel.selectedIndex].dataset.ticker;
   const label=sel.options[sel.selectedIndex].text;
   const el=document.getElementById('fin-list');
-  el.innerHTML=`<div class="loading">Searching finance news for ${label}...</div>`;
+  el.innerHTML=`<div class="loading">Searching finance news for ${label} (company + franchise queries)...</div>`;
 
   const cutoffDate = daysAgo(14);
 
   try{
-    // "when:14d" is a Google News search operator that restricts results to the last 14 days
-    const gnewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(company+' stock OR earnings OR sales when:14d')}&hl=en-US&gl=US&ceid=US:en`;
-    const items = await rss(gnewsUrl);
+    // Two queries, not one: company name alone misses franchise-only coverage
+    // (e.g. "Assassin's Creed sales beat estimates" with zero mention of "Ubisoft").
+    // Query 1: company name. Query 2: its top franchise titles, OR-combined.
+    const companyQueryUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(company+' stock OR earnings OR sales when:14d')}&hl=en-US&gl=US&ceid=US:en`;
 
-    const pubMatcher = PUB_MATCHERS.find(m=>m.ticker===ticker);
+    const titleEntry = TITLE_MAP.find(e=>e.t===ticker);
+    const franchiseTerms = titleEntry ? titleEntry.kw.slice(0,5).map(k=>k.trim()).filter(Boolean) : [];
+    const franchiseQuery = franchiseTerms.length
+      ? franchiseTerms.map(k=>`"${k}"`).join(' OR ') + ' sales OR earnings when:14d'
+      : null;
+    const franchiseQueryUrl = franchiseQuery
+      ? `https://news.google.com/rss/search?q=${encodeURIComponent(franchiseQuery)}&hl=en-US&gl=US&ceid=US:en`
+      : null;
+
+    const urls = [companyQueryUrl];
+    if(franchiseQueryUrl) urls.push(franchiseQueryUrl);
+
+    const results = await Promise.allSettled(urls.map(u=>rss(u)));
+    let items = [];
+    results.forEach(r=>{ if(r.status==='fulfilled') items.push(...r.value); });
 
     finItems = items.filter(item=>{
       const text = (item.title||'') + ' ' + (item.description||'');
-      // Must actually mention this specific company (not just appear in a query match)
-      if(pubMatcher && !pubMatcher.regex.test(text)) return false;
+      // Match this specific company, directly OR via one of its franchises
+      const match = matchPublisherOrTitle(text);
+      if(!match || match.ticker !== ticker) return false;
       if(!isFinanciallyRelevant(text)) return false;
-      // Enforce 14-day window client-side as a backstop to the when:14d operator
       const d = parseAnyDate(item.pubDate);
       if(d && d < cutoffDate) return false;
+      item._matchedVia = match.via;
       return true;
     });
 
@@ -782,16 +919,21 @@ async function loadFinanceNews(){
     });
 
     if(!finItems.length){
-      el.innerHTML='<div class="loading">No articles in the last 14 days matched both the company and a financial-relevance term. This can happen for quieter companies — try again after their next earnings window.</div>';
+      el.innerHTML='<div class="loading">No articles in the last 14 days matched the company (or its franchises) plus a financial-relevance term. This can happen for quieter companies — try again after their next earnings window.</div>';
     } else {
-      el.innerHTML = finItems.slice(0,40).map(i=>`
+      el.innerHTML = finItems.slice(0,40).map(i=>{
+        const viaTag = i._matchedVia==='franchise-title'
+          ? `<span class="feed-match-tag" style="background:#FAEEDA;color:#854F0B" title="Matched via franchise title, not company name">via title</span>`
+          : '';
+        return `
         <div class="feed-row">
           <span class="feed-source-tag" style="background:#E6F1FB;color:#185FA5">Google News</span>
           <div style="flex:1;min-width:0">
-            <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a></div>
+            <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a>${viaTag}</div>
             <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
     const cEl=document.getElementById('fin-count');
     if(cEl) cEl.textContent = `${finItems.length} of ${items.length} fetched (14d)`;
@@ -801,40 +943,91 @@ async function loadFinanceNews(){
 // ════════════════════════════════════════════════════════════════
 // REDDIT — per-publisher SEARCH (not generic hot feed) + relevance filter
 // ════════════════════════════════════════════════════════════════
+// Reddit's current RSS rate limit is roughly 1 request/minute, applied across ALL
+// requests from the same source IP in that window (not per-feed). Firing 15 parallel
+// per-publisher requests — the previous approach — reliably triggers a 429 on any
+// request beyond the first couple, which is why posts appeared once on boot and then
+// vanished on refresh. Fix: batch all publisher + franchise terms into 2 OR-grouped
+// queries total, using Reddit's documented OR/parentheses search syntax, so we make
+// 2 requests instead of 15.
+function buildRedditBatchQueries(){
+  // Batch 1: publisher company names, OR-combined, in groups small enough to stay
+  // under Reddit's practical query-length limits (~5-6 terms per group is safe).
+  const allNames = PUBLISHERS.map(p=>p.names[0]);
+  // Batch 2: a representative sample of high-signal franchise titles (one per publisher,
+  // picking the most search-distinctive keyword from TITLE_MAP) so franchise-only posts
+  // ("Monster Hunter Wilds broke sale records") can still be found via direct search,
+  // not just matched after the fact from whatever generic terms happened to return.
+  const franchiseSample = TITLE_MAP.map(entry=>entry.kw[0]).filter(Boolean);
+
+  function chunk(arr, size){
+    const out=[];
+    for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+    return out;
+  }
+
+  const nameGroups = chunk(allNames, 6).map(g=>'('+g.map(n=>`"${n}"`).join(' OR ')+')');
+  const franchiseGroups = chunk(franchiseSample, 6).map(g=>'('+g.map(n=>`"${n.trim()}"`).join(' OR ')+')');
+
+  // Combine into exactly 2 total requests: one for company names, one for franchise titles.
+  // Within each, OR-join the chunks together (still one request, longer query).
+  const q1 = nameGroups.join(' OR ');
+  const q2 = franchiseGroups.join(' OR ');
+
+  return [
+    `https://www.reddit.com/r/gaming+Games+stocks/search.rss?q=${encodeURIComponent(q1)}&restrict_sr=on&sort=new&limit=40&t=week`,
+    `https://www.reddit.com/r/gaming+Games+stocks/search.rss?q=${encodeURIComponent(q2)}&restrict_sr=on&sort=new&limit=40&t=week`,
+  ];
+}
+
 async function loadReddit(){
   const el=document.getElementById('reddit-list');
-  el.innerHTML='<div class="loading">Searching Reddit across publicly traded publishers...</div>';
+  el.innerHTML='<div class="loading">Searching Reddit (2 batched queries)...</div>';
   try{
-    // Build one targeted search query per publisher rather than pulling generic "hot" feeds.
-    // This searches r/gaming, r/Games, and r/stocks simultaneously via Reddit's multi-sub search.
-    const queries = PUBLISHERS.map(p=>{
-      const term = encodeURIComponent(p.names[0]);
-      return `https://www.reddit.com/r/gaming+Games+stocks/search.rss?q=${term}&restrict_sr=on&sort=new&limit=15&t=week`;
-    });
+    const queries = buildRedditBatchQueries();
 
-    const results = await Promise.allSettled(queries.map(u=>rss(u)));
-    redditItemsRaw=[];
-    results.forEach((res,idx)=>{
-      if(res.status!=='fulfilled') return;
-      const pub=PUBLISHERS[idx];
-      for(const item of res.value){
-        redditItemsRaw.push({...item, _expectedTicker:pub.ticker});
+    // Small delay between the two requests rather than firing simultaneously —
+    // Reddit's current limit is roughly 1/minute, so even 2 truly parallel requests
+    // can trip it. Sequential with a short gap is the safer pattern.
+    const results = [];
+    for(const url of queries){
+      try{
+        const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({target:'rss',url})});
+        const d=await r.json();
+        if(d.error && /429|too many/i.test(String(d.error))){
+          results.push({status:'rate_limited'});
+        } else {
+          results.push({status:'fulfilled', value:d.items||[]});
+        }
+      }catch(e){
+        results.push({status:'rejected', reason:e});
       }
+      // brief pause between the two requests
+      await new Promise(res=>setTimeout(res,1500));
+    }
+
+    const rateLimited = results.some(r=>r.status==='rate_limited');
+    redditItemsRaw=[];
+    results.forEach(res=>{
+      if(res.status!=='fulfilled') return;
+      for(const item of res.value){ redditItemsRaw.push(item); }
     });
 
-    // Dedup by link first (same post can surface from multiple publisher searches)
     const seenLinks=new Set();
     redditItemsRaw = redditItemsRaw.filter(i=>{
       if(seenLinks.has(i.link)) return false; seenLinks.add(i.link); return true;
     });
 
-    // Filter: must mention a publisher AND a financial-relevance term
+    // Filter: must mention a publisher OR a franchise title connected to one,
+    // AND a financial-relevance term.
     redditItemsFiltered = redditItemsRaw.filter(item=>{
       const text = (item.title||'') + ' ' + (item.description||'');
-      const pub = matchPublisher(text);
+      const pub = matchPublisherOrTitle(text);
       if(!pub) return false;
       if(!isFinanciallyRelevant(text)) return false;
       item._matchedPublisher = pub.ticker;
+      item._matchedVia = pub.via;
       return true;
     });
 
@@ -847,25 +1040,32 @@ async function loadReddit(){
     renderReddit();
     const el2=document.getElementById('reddit-count');
     if(el2) el2.textContent = `${redditItemsFiltered.length} of ${redditItemsRaw.length} fetched`;
-    const failedCount = results.filter(r=>r.status!=='fulfilled').length;
-    if(failedCount) warnEl('reddit-list', `${failedCount} of ${queries.length} publisher searches did not respond`);
+
+    if(rateLimited){
+      warnEl('reddit-list', `Reddit rate-limited one or both queries (their RSS limit is currently strict, roughly 1 request/minute). Showing whatever did come through — wait about a minute before refreshing again.`);
+    }
   }catch(e){errEl('reddit-list','Feed error: '+e.message);}
 }
 
 function renderReddit(){
   const el=document.getElementById('reddit-list');
   if(!redditItemsFiltered.length){
-    el.innerHTML='<div class="loading">No posts matched a publicly traded publisher + financial-relevance filter this week. Try refreshing later.</div>';
+    el.innerHTML='<div class="loading">No posts matched a publicly traded publisher (or a connected franchise) + financial-relevance filter this week. Try refreshing later.</div>';
     return;
   }
-  el.innerHTML = redditItemsFiltered.slice(0,60).map(i=>`
+  el.innerHTML = redditItemsFiltered.slice(0,60).map(i=>{
+    const viaTag = i._matchedVia==='franchise-title'
+      ? `<span class="feed-match-tag" style="background:#FAEEDA;color:#854F0B" title="Matched via franchise title, not company name">via title</span>`
+      : '';
+    return `
     <div class="feed-row">
       <span class="feed-source-tag" style="background:#FAECE7;color:#993C1D">Reddit</span>
       <div style="flex:1;min-width:0">
-        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a><span class="feed-match-tag">${i._matchedPublisher}</span></div>
+        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a><span class="feed-match-tag">${i._matchedPublisher}</span>${viaTag}</div>
         <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 init();
