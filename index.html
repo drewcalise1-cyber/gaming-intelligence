@@ -127,6 +127,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
       <button class="intel-subtab" onclick="switchIntelSub('news',this)">Gaming news</button>
       <button class="intel-subtab" onclick="switchIntelSub('fin',this)">Finance news</button>
       <button class="intel-subtab" onclick="switchIntelSub('reddit',this)">Reddit</button>
+      <button class="intel-subtab" onclick="switchIntelSub('edgar',this)">SEC filings</button>
     </div>
 
     <!-- MEDIA MOMENTUM -->
@@ -199,6 +200,29 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
         AND a financial-relevance term &middot; free, no AI tokens
       </p>
       <div id="reddit-list"><div class="loading">Loading Reddit posts...</div></div>
+    </div>
+
+    <!-- SEC FILINGS -->
+    <div class="intel-subpanel" id="intel-edgar">
+      <div class="panel-header">
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="edgar-select"></select>
+          <button class="btn" onclick="loadEdgarFilings()">Search</button>
+        </div>
+        <span class="count-badge" id="edgar-count"></span>
+      </div>
+      <p class="note" style="color:#854F0B">
+        <strong>Coverage limit:</strong> only 5 of 15 tracked companies have meaningful SEC filing presence &mdash;
+        Microsoft, Take-Two, EA, and Roblox (standard US domestic filers) plus Sony (foreign private issuer, 20-F/6-K).
+        The remaining 10 companies (Nintendo, Capcom, Konami, Square Enix, Sega Sammy, Bandai Namco, Koei Tecmo,
+        Ubisoft, CD Projekt, Embracer) trade as Level 1 ADRs with no SEC reporting obligation &mdash; verified per-company,
+        not assumed by category &mdash; so they will not appear here regardless of what's happening at the company.
+      </p>
+      <p class="note">
+        Direct from SEC EDGAR (data.sec.gov), free and official, no API key &middot; shows recent 8-K (material events),
+        10-Q/10-K (quarterly/annual), 20-F/6-K (Sony's foreign-issuer equivalents), and Form 4 (insider trading)
+      </p>
+      <div id="edgar-list"><div class="loading">Select a company and click Search</div></div>
     </div>
   </div>
 
@@ -358,6 +382,22 @@ const PUBLISHERS = [
   {ticker:'3635.T',   label:'Koei Tecmo (3635.T)',            names:['koei tecmo','koei','tecmo','team ninja'],                                               query:'Koei Tecmo Team Ninja games'},
 ];
 
+// ── SEC EDGAR coverage ───────────────────────────────────────────
+// Only these 5 of the 15 tracked companies have meaningful SEC filing
+// presence. CIK numbers verified individually against live, current EDGAR
+// filings (not assumed) — each confirmed via at least one filing from 2026.
+// The other 10 companies trade as Level 1 ADRs (OTC/Pink Sheets), which
+// specifically do NOT carry SEC reporting obligations — verified per-company
+// via their actual OTC Markets listing tier, not assumed by "foreign company"
+// category, since some ADR levels (like Sony's) do carry full obligations.
+const EDGAR_COMPANIES = [
+  {ticker:'MSFT', label:'Microsoft (MSFT)', cik:'0000789019', forms:['10-K','10-Q','8-K','4']},
+  {ticker:'TTWO', label:'Take-Two Interactive (TTWO)', cik:'0000946581', forms:['10-K','10-Q','8-K','4']},
+  {ticker:'EA',   label:'Electronic Arts (EA)', cik:'0000712515', forms:['10-K','10-Q','8-K','4']},
+  {ticker:'RBLX', label:'Roblox (RBLX)', cik:'0001315098', forms:['10-K','10-Q','8-K','4']},
+  {ticker:'SONY', label:'Sony Group (SONY)', cik:'0000313838', forms:['20-F','6-K','4']},
+];
+
 const FIN_RELEVANCE_TERMS = [
   'earnings','revenue','profit','loss','quarterly','q1','q2','q3','q4','fiscal',
   'sales','sale','units sold','record','records','launch','release date','delay','delayed','postpone',
@@ -410,6 +450,12 @@ function populateSelects(){
   if(newsSel){
     const newsOpts = PUBLISHERS.map(p=>`<option value="${p.ticker}">${p.label}</option>`).join('');
     newsSel.innerHTML = `<option value="all">All publishers</option>` + newsOpts;
+  }
+
+  // EDGAR dropdown uses only the 5 companies with real SEC coverage, not all 15
+  const edgarSel=document.getElementById('edgar-select');
+  if(edgarSel){
+    edgarSel.innerHTML = EDGAR_COMPANIES.map(c=>`<option value="${c.ticker}">${c.label}</option>`).join('');
   }
 }
 
@@ -1063,6 +1109,94 @@ function renderReddit(){
       <div style="flex:1;min-width:0">
         <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a><span class="feed-match-tag">${i._matchedPublisher}</span>${viaTag}</div>
         <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// SEC FILINGS — direct from data.sec.gov, free, no key, official source
+// Scoped to only the 5 of 15 companies with real EDGAR coverage (see
+// EDGAR_COMPANIES above). CIKs verified individually against live filings.
+// ════════════════════════════════════════════════════════════════
+let edgarItems = [];
+
+async function loadEdgarFilings(){
+  const sel=document.getElementById('edgar-select');
+  const ticker=sel.value;
+  const label=sel.options[sel.selectedIndex].text;
+  const el=document.getElementById('edgar-list');
+  el.innerHTML=`<div class="loading">Fetching SEC filing history for ${label}...</div>`;
+
+  const company = EDGAR_COMPANIES.find(c=>c.ticker===ticker);
+  if(!company){ errEl('edgar-list','Unknown company selection'); return; }
+
+  try{
+    const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({target:'edgar', edgarType:'submissions', cik:company.cik})});
+    const data=await r.json();
+    if(data.error){ throw new Error(typeof data.error==='string'?data.error:JSON.stringify(data.error)); }
+
+    const recent = data.filings && data.filings.recent;
+    if(!recent || !recent.form){ throw new Error('Unexpected response shape from SEC EDGAR'); }
+
+    // Response is parallel arrays — same index across all fields describes one filing
+    edgarItems = [];
+    const cikNoPad = String(parseInt(company.cik, 10)); // for building archive URLs (no leading zeros)
+    for(let i=0;i<recent.form.length;i++){
+      const form = recent.form[i];
+      if(!company.forms.includes(form)) continue; // only show form types relevant to this company
+      const accessionNoDashes = (recent.accessionNumber[i]||'').replace(/-/g,'');
+      const primaryDoc = recent.primaryDocument && recent.primaryDocument[i];
+      const filingUrl = primaryDoc
+        ? `https://www.sec.gov/Archives/edgar/data/${cikNoPad}/${accessionNoDashes}/${primaryDoc}`
+        : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${company.cik}`;
+      edgarItems.push({
+        form,
+        filingDate: recent.filingDate[i],
+        reportDate: recent.reportDate ? recent.reportDate[i] : '',
+        primaryDocDescription: recent.primaryDocDescription ? recent.primaryDocDescription[i] : '',
+        url: filingUrl,
+      });
+    }
+
+    edgarItems.sort((a,b)=> new Date(b.filingDate) - new Date(a.filingDate));
+    renderEdgarFilings(company);
+
+    const cEl=document.getElementById('edgar-count');
+    if(cEl) cEl.textContent = `${edgarItems.length} filings (${company.forms.join('/')})`;
+
+  }catch(e){
+    errEl('edgar-list','SEC EDGAR error: '+e.message+' — note this is a direct connection to data.sec.gov; if this persists, SEC may be rate-limiting or the service may be temporarily down.');
+  }
+}
+
+const EDGAR_FORM_LABELS = {
+  '8-K':'Material event (8-K)', '10-Q':'Quarterly report (10-Q)', '10-K':'Annual report (10-K)',
+  '20-F':'Annual report, foreign issuer (20-F)', '6-K':'Current report, foreign issuer (6-K)',
+  '4':'Insider trade (Form 4)',
+};
+const EDGAR_FORM_COLORS = {
+  '8-K':{bg:'#FAECE7',c:'#993C1D'}, '10-Q':{bg:'#E6F1FB',c:'#185FA5'}, '10-K':{bg:'#E1F5EE',c:'#0F6E56'},
+  '20-F':{bg:'#E1F5EE',c:'#0F6E56'}, '6-K':{bg:'#FAECE7',c:'#993C1D'}, '4':{bg:'#FAEEDA',c:'#854F0B'},
+};
+
+function renderEdgarFilings(company){
+  const el=document.getElementById('edgar-list');
+  if(!edgarItems.length){
+    el.innerHTML='<div class="loading">No recent filings of the tracked types found. This can happen between reporting periods.</div>';
+    return;
+  }
+  el.innerHTML = edgarItems.slice(0,40).map(i=>{
+    const col = EDGAR_FORM_COLORS[i.form] || {bg:'var(--bg2)',c:'var(--text2)'};
+    const formLabel = EDGAR_FORM_LABELS[i.form] || i.form;
+    const desc = i.primaryDocDescription ? ` — ${i.primaryDocDescription}` : '';
+    return `
+    <div class="feed-row">
+      <span class="feed-source-tag" style="background:${col.bg};color:${col.c}">${i.form}</span>
+      <div style="flex:1;min-width:0">
+        <div class="feed-title"><a href="${i.url}" target="_blank" rel="noopener">${formLabel}${desc}</a></div>
+        <div class="feed-meta">Filed ${fmtDate(i.filingDate)}${i.reportDate?` &middot; period ending ${fmtDate(i.reportDate)}`:''}</div>
       </div>
     </div>`;
   }).join('');
