@@ -43,7 +43,12 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .section-divider{font-size:10px;font-weight:500;color:var(--text3);padding:8px 0 4px;border-bottom:0.5px solid var(--border);margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em;}
 .src-link{font-size:10px;color:var(--text3);margin-left:6px;opacity:.65;text-decoration:none;}
 .src-link:hover{opacity:1;text-decoration:underline;}
-/* Momentum / Leak Watch shared */
+/* Intel subsections (Media Momentum / Leak Watch / Gaming News / Finance News / Reddit, all under one tab) */
+.intel-subnav{display:flex;gap:4px;margin-bottom:16px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;}
+.intel-subtab{padding:7px 12px;font-size:12px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-0.5px;border-radius:6px 6px 0 0;}
+.intel-subtab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;background:var(--bg2);}
+.intel-subpanel{display:none;}
+.intel-subpanel.active{display:block;}
 .mom-controls{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
 .mom-controls select{flex:1;font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text);}
 .score-block{display:flex;gap:16px;padding-bottom:14px;margin-bottom:14px;border-bottom:0.5px solid var(--border);align-items:center;}
@@ -78,21 +83,18 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
 .feed-title a:hover{text-decoration:underline;}
 .feed-desc{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.45;}
 .feed-meta{font-size:10px;color:var(--text3);margin-top:4px;}
+.feed-match-tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;background:#E1F5EE;color:#0F6E56;margin-left:6px;vertical-align:middle;}
 </style>
 </head>
 <body>
 <div class="app">
   <h1>Gaming intelligence</h1>
-  <p class="subtitle">Events &amp; releases &nbsp;&middot;&nbsp; Media momentum &nbsp;&middot;&nbsp; Leak watch &nbsp;&middot;&nbsp; Gaming news &nbsp;&middot;&nbsp; Finance news &nbsp;&middot;&nbsp; Reddit</p>
+  <p class="subtitle">Events &amp; releases &nbsp;&middot;&nbsp; Market intel</p>
   <div class="status-bar" id="status-bar">Connecting...</div>
 
   <div class="tabs" id="tabs-row">
     <button class="tab active" onclick="switchTab('cal',this)">Events &amp; releases</button>
-    <button class="tab" onclick="switchTab('mom',this)">Media momentum</button>
-    <button class="tab" onclick="switchTab('leak',this)">Leak watch</button>
-    <button class="tab" onclick="switchTab('news',this)">Gaming news</button>
-    <button class="tab" onclick="switchTab('fin',this)">Finance news</button>
-    <button class="tab" onclick="switchTab('reddit',this)">Reddit</button>
+    <button class="tab" onclick="switchTab('intel',this)">Market intel</button>
   </div>
 
   <!-- EVENTS & RELEASES -->
@@ -117,111 +119,81 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
     <div id="cal-list"><div class="loading">Loading...</div></div>
   </div>
 
-  <!-- MEDIA MOMENTUM -->
-  <div class="panel" id="panel-mom">
-    <p class="note">Select a company and click Scan &mdash; one Claude live search (~$0.003). <a href="/momentum_methodology.pdf" target="_blank" style="color:inherit;opacity:.7;margin-left:4px">Methodology &#8599;</a></p>
-    <div class="mom-controls">
-      <select id="mom-select">
-        <optgroup label="US &mdash; NASDAQ / NYSE">
-          <option value="Microsoft Xbox gaming">Microsoft / Xbox (MSFT)</option>
-          <option value="Sony PlayStation gaming">Sony / PlayStation (SONY)</option>
-          <option value="Take-Two Interactive Rockstar Games GTA">Take-Two Interactive (TTWO)</option>
-          <option value="Electronic Arts EA gaming">Electronic Arts (EA)</option>
-          <option value="Roblox gaming platform">Roblox (RBLX)</option>
-        </optgroup>
-        <optgroup label="Europe">
-          <option value="Ubisoft video games">Ubisoft (UBI.PA)</option>
-          <option value="CD Projekt Red Witcher Cyberpunk">CD Projekt (CDR.WA)</option>
-          <option value="Embracer Group THQ Nordic games">Embracer Group (EMBRAC-B.ST)</option>
-        </optgroup>
-        <optgroup label="Japan &mdash; TSE">
-          <option value="Nintendo Switch games">Nintendo (7974.T)</option>
-          <option value="Capcom Monster Hunter Resident Evil">Capcom (9697.T)</option>
-          <option value="Konami Metal Gear Silent Hill">Konami (9766.T)</option>
-          <option value="Square Enix Final Fantasy Dragon Quest">Square Enix (9684.T)</option>
-          <option value="Sega Atlus Persona games">Sega Sammy (6460.T)</option>
-          <option value="Bandai Namco Elden Ring Tekken">Bandai Namco (7832.T)</option>
-          <option value="Koei Tecmo Team Ninja games">Koei Tecmo (3635.T)</option>
-        </optgroup>
-      </select>
-      <button class="btn btn-primary" onclick="runMom()">Scan</button>
+  <!-- MARKET INTEL — consolidated: Media Momentum / Leak Watch / Gaming News / Finance News / Reddit -->
+  <div class="panel" id="panel-intel">
+    <div class="intel-subnav" id="intel-subnav">
+      <button class="intel-subtab active" onclick="switchIntelSub('mom',this)">Media momentum</button>
+      <button class="intel-subtab" onclick="switchIntelSub('leak',this)">Leak watch</button>
+      <button class="intel-subtab" onclick="switchIntelSub('news',this)">Gaming news</button>
+      <button class="intel-subtab" onclick="switchIntelSub('fin',this)">Finance news</button>
+      <button class="intel-subtab" onclick="switchIntelSub('reddit',this)">Reddit</button>
     </div>
-    <div id="mom-results"></div>
-  </div>
 
-  <!-- LEAK WATCH -->
-  <div class="panel" id="panel-leak">
-    <div class="panel-header">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:13px;font-weight:500">ESRB / PEGI Leak Watch</span>
+    <!-- MEDIA MOMENTUM -->
+    <div class="intel-subpanel active" id="intel-mom">
+      <p class="note">Select a company and click Scan &mdash; one Claude live search (~$0.003). <a href="/momentum_methodology.pdf" target="_blank" style="color:inherit;opacity:.7;margin-left:4px">Methodology &#8599;</a></p>
+      <div class="mom-controls">
+        <select id="mom-select"></select>
+        <button class="btn btn-primary" onclick="runMom()">Scan</button>
+      </div>
+      <div id="mom-results"></div>
+    </div>
+
+    <!-- LEAK WATCH -->
+    <div class="intel-subpanel" id="intel-leak">
+      <div class="panel-header">
         <span class="count-badge" id="leak-count"></span>
+        <button class="btn btn-primary" onclick="runLeakWatch()">Scan &#8599;</button>
       </div>
-      <button class="btn btn-primary" onclick="runLeakWatch()">Scan &#8599;</button>
+      <p class="note">
+        Claude live search for journalist &amp; community coverage of unannounced ESRB/PEGI ratings &middot;
+        Hard cutoff: only items from the last 14 days &middot; one Claude search (~$0.004, deeper query)
+      </p>
+      <div id="leak-list"><div class="loading" style="padding:30px 0">Click "Scan" to search for recent ESRB/PEGI leak coverage</div></div>
     </div>
-    <p class="note" id="leak-note">
-      Claude live search for journalist &amp; community coverage of unannounced ESRB/PEGI ratings &middot;
-      Hard cutoff: only items from the last 14 days are shown &middot; one Claude search (~$0.004, deeper query)
-    </p>
-    <div id="leak-list"><div class="loading" style="padding:30px 0">Click "Scan" to search for recent ESRB/PEGI leak coverage</div></div>
-  </div>
 
-  <!-- GAMING NEWS -->
-  <div class="panel" id="panel-news">
-    <div class="panel-header">
-      <div class="chip-row" id="news-chips" style="margin:0">
-        <button class="chip active" onclick="filterNews('all',this)">All sources</button>
-        <button class="chip" onclick="filterNews('IGN',this)">IGN</button>
-        <button class="chip" onclick="filterNews('Eurogamer',this)">Eurogamer</button>
-        <button class="chip" onclick="filterNews('GameSpot',this)">GameSpot</button>
-        <button class="chip" onclick="filterNews('VGC',this)">VGC</button>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center">
+    <!-- GAMING NEWS -->
+    <div class="intel-subpanel" id="intel-news">
+      <div class="panel-header">
         <span class="count-badge" id="news-count"></span>
         <button class="btn" onclick="loadGamingNews()">Refresh</button>
       </div>
+      <p class="note">
+        RSS from IGN, Eurogamer, GameSpot, VGC &middot; filtered to articles mentioning a publicly traded publisher
+        AND a financial-relevance term (earnings, sales, launch, delay, lawsuit, acquisition, layoffs, stock) &middot;
+        free, no AI tokens
+      </p>
+      <div id="news-list"><div class="loading">Loading gaming news...</div></div>
     </div>
-    <p class="note">Live RSS from IGN, Eurogamer, GameSpot, VGC &middot; free, no AI tokens &middot; sorted most recent first</p>
-    <div id="news-list"><div class="loading">Loading gaming news...</div></div>
-  </div>
 
-  <!-- FINANCE NEWS -->
-  <div class="panel" id="panel-fin">
-    <div class="panel-header">
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="fin-select" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text)">
-          <option value="Microsoft Xbox">Microsoft (MSFT)</option>
-          <option value="Sony PlayStation">Sony (SONY)</option>
-          <option value="Take-Two Interactive">Take-Two (TTWO)</option>
-          <option value="Electronic Arts">EA</option>
-          <option value="Ubisoft">Ubisoft</option>
-          <option value="Nintendo">Nintendo</option>
-          <option value="Capcom">Capcom</option>
-          <option value="Roblox">Roblox</option>
-        </select>
-        <button class="btn" onclick="loadFinanceNews()">Search</button>
+    <!-- FINANCE NEWS -->
+    <div class="intel-subpanel" id="intel-fin">
+      <div class="panel-header">
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="fin-select"></select>
+          <button class="btn" onclick="loadFinanceNews()">Search</button>
+        </div>
+        <span class="count-badge" id="fin-count"></span>
       </div>
-      <span class="count-badge" id="fin-count"></span>
+      <p class="note">
+        Google News RSS for selected company, filtered to last 14 days and to articles containing the company
+        name/ticker AND a financial term &middot; free, no AI tokens
+      </p>
+      <div id="fin-list"><div class="loading">Select a company and click Search</div></div>
     </div>
-    <p class="note">Google News RSS for selected company + gaming/stock context, plus Bloomberg &amp; Reuters filtered feeds &middot; free, no AI tokens</p>
-    <div id="fin-list"><div class="loading">Select a company and click Search</div></div>
-  </div>
 
-  <!-- REDDIT -->
-  <div class="panel" id="panel-reddit">
-    <div class="panel-header">
-      <div class="chip-row" id="reddit-chips" style="margin:0">
-        <button class="chip active" onclick="filterReddit('all',this)">All</button>
-        <button class="chip" onclick="filterReddit('gaming',this)">r/gaming</button>
-        <button class="chip" onclick="filterReddit('games',this)">r/Games</button>
-        <button class="chip" onclick="filterReddit('stocks',this)">r/stocks</button>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center">
+    <!-- REDDIT -->
+    <div class="intel-subpanel" id="intel-reddit">
+      <div class="panel-header">
         <span class="count-badge" id="reddit-count"></span>
         <button class="btn" onclick="loadReddit()">Refresh</button>
       </div>
+      <p class="note">
+        Reddit search (not generic "hot" feed) scoped per-publisher &middot; filtered to posts mentioning
+        a publicly traded publisher AND a financial-relevance term &middot; free, no AI tokens
+      </p>
+      <div id="reddit-list"><div class="loading">Loading Reddit posts...</div></div>
     </div>
-    <p class="note">Hot posts from r/gaming, r/Games, r/stocks (gaming-filtered) via Reddit RSS &middot; free, no AI tokens</p>
-    <div id="reddit-list"><div class="loading">Loading Reddit posts...</div></div>
   </div>
 
 </div>
@@ -255,7 +227,7 @@ function parseAnyDate(s){
   return isNaN(d) ? null : d;
 }
 
-// ── Title-based ticker lookup ───────────────────────────────────────
+// ── Title-based ticker lookup (franchise → publisher), used for Releases tab ──
 const TITLE_MAP = [
   {kw:['doom','quake','elder scrolls','oblivion','skyrim','fallout','starfield','wolfenstein','dishonored','prey','deathloop','redfall','hi-fi rush','indiana jones','great circle','gears of war','halo ','forza','sea of thieves','grounded','age of empires','minecraft','call of duty','world of warcraft','overwatch','diablo','starcraft','hearthstone','candy crush','machine games','machinegames','fable'],t:'MSFT',p:'Microsoft'},
   {kw:['god of war','spider-man','the last of us','last of us','horizon forbidden','horizon zero','ghost of tsushima','ghost of yotei','gran turismo','uncharted','astro bot','ratchet','returnal','bloodborne','days gone','sackboy','marvels wolverine',"marvel's wolverine",'intergalactic','concord','marathon','helldivers','until dawn'],t:'SONY',p:'Sony Group'},
@@ -283,6 +255,66 @@ function resolveTicker(title){
   return null;
 }
 
+// ── Publisher dictionary: single source of truth for ALL company dropdowns
+// and ALL relevance filtering (Gaming News / Finance News / Reddit).
+// Each entry: ticker, display label, search query terms (company name variants),
+// and a "narrow" search phrase used for Google News / Reddit queries.
+const PUBLISHERS = [
+  {ticker:'MSFT',     label:'Microsoft / Xbox (MSFT)',        names:['microsoft','xbox','xbox game studios','bethesda','activision blizzard','activision'], query:'Microsoft Xbox gaming'},
+  {ticker:'SONY',     label:'Sony / PlayStation (SONY)',      names:['sony','playstation','sony interactive entertainment','naughty dog','insomniac'],     query:'Sony PlayStation gaming'},
+  {ticker:'TTWO',     label:'Take-Two Interactive (TTWO)',    names:['take-two','take two interactive','rockstar games','rockstar','2k games','2k'],         query:'Take-Two Interactive Rockstar GTA'},
+  {ticker:'EA',       label:'Electronic Arts (EA)',           names:['electronic arts','ea sports','ea games',' ea '],                                       query:'Electronic Arts EA gaming'},
+  {ticker:'RBLX',     label:'Roblox (RBLX)',                  names:['roblox','roblox corporation'],                                                          query:'Roblox gaming platform'},
+  {ticker:'UBI.PA',   label:'Ubisoft (UBI.PA)',               names:['ubisoft'],                                                                              query:'Ubisoft video games'},
+  {ticker:'CDR.WA',   label:'CD Projekt (CDR.WA)',            names:['cd projekt','cd projekt red','cdpr'],                                                   query:'CD Projekt Red Witcher Cyberpunk'},
+  {ticker:'EMBRAC-B.ST', label:'Embracer Group (EMBRAC-B.ST)', names:['embracer group','embracer','thq nordic'],                                              query:'Embracer Group THQ Nordic games'},
+  {ticker:'7974.T',   label:'Nintendo (7974.T)',              names:['nintendo'],                                                                             query:'Nintendo Switch games'},
+  {ticker:'9697.T',   label:'Capcom (9697.T)',                names:['capcom'],                                                                               query:'Capcom Monster Hunter Resident Evil'},
+  {ticker:'9766.T',   label:'Konami (9766.T)',                names:['konami'],                                                                               query:'Konami Metal Gear Silent Hill'},
+  {ticker:'9684.T',   label:'Square Enix (9684.T)',           names:['square enix','squareenix'],                                                             query:'Square Enix Final Fantasy Dragon Quest'},
+  {ticker:'6460.T',   label:'Sega Sammy (6460.T)',            names:['sega','sega sammy','atlus'],                                                            query:'Sega Atlus Persona games'},
+  {ticker:'7832.T',   label:'Bandai Namco (7832.T)',          names:['bandai namco','namco'],                                                                 query:'Bandai Namco Elden Ring Tekken'},
+  {ticker:'3635.T',   label:'Koei Tecmo (3635.T)',            names:['koei tecmo','koei','tecmo','team ninja'],                                               query:'Koei Tecmo Team Ninja games'},
+];
+
+const FIN_RELEVANCE_TERMS = [
+  'earnings','revenue','profit','loss','quarterly','q1','q2','q3','q4','fiscal',
+  'sales','units sold','launch','release date','delay','delayed','postpone',
+  'lawsuit','sue','sued','litigation','acquisition','acquire','merger','buyout',
+  'layoff','layoffs','restructur','job cuts','stock','shares','share price',
+  'guidance','forecast','outlook','analyst','price target','ipo','dividend',
+  'ceo','executive','resign','unannounced','leak','leaked','rating','esrb','pegi',
+];
+
+function buildPublisherMatchers(){
+  // Returns array of {ticker,label,regex} where regex matches any company-name variant
+  return PUBLISHERS.map(p=>{
+    const escaped = p.names.map(n=>n.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+    return {ticker:p.ticker, label:p.label, regex:new RegExp('\\b('+escaped.join('|')+')\\b','i')};
+  });
+}
+const PUB_MATCHERS = buildPublisherMatchers();
+const FIN_TERMS_REGEX = new RegExp('\\b('+FIN_RELEVANCE_TERMS.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')\\b','i');
+
+function matchPublisher(text){
+  if(!text) return null;
+  for(const m of PUB_MATCHERS){
+    if(m.regex.test(text)) return m;
+  }
+  return null;
+}
+function isFinanciallyRelevant(text){
+  return FIN_TERMS_REGEX.test(text||'');
+}
+
+function populateSelects(){
+  const opts = PUBLISHERS.map(p=>`<option value="${p.query}" data-ticker="${p.ticker}">${p.label}</option>`).join('');
+  const momSel=document.getElementById('mom-select');
+  const finSel=document.getElementById('fin-select');
+  if(momSel) momSel.innerHTML=opts;
+  if(finSel) finSel.innerHTML=opts;
+}
+
 const COL={
   event:   {bg:'#E6F1FB',c:'#185FA5'},
   release: {bg:'#E1F5EE',c:'#0F6E56'},
@@ -291,9 +323,9 @@ const COL={
 
 let calEvents=[], calReleases=[];
 let calFilter='all';
-let newsItems=[], newsFilter='all';
+let newsItemsRaw=[], newsItemsFiltered=[];
 let finItems=[];
-let redditItems=[], redditFilter='all';
+let redditItemsRaw=[], redditItemsFiltered=[];
 
 // ── API helpers ───────────────────────────────────────────────────
 async function claudeCall(prompt, maxTokens){
@@ -334,6 +366,7 @@ function warnEl(id,msg){document.getElementById(id).innerHTML+=`<div class="warn
 function setStatus(msg,ok){const el=document.getElementById('status-bar');el.textContent=msg;el.className='status-bar '+(ok?'ok':'err');}
 
 async function init(){
+  populateSelects();
   try{
     const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1,messages:[{role:'user',content:'hi'}]})});
@@ -342,36 +375,30 @@ async function init(){
     setStatus('Connected — RAWG database + Claude live search + RSS feeds ready',true);
     loadRawgReleases();
     loadGamingNews();
-    loadReddit();
   }catch(e){setStatus('Cannot reach /api/proxy',false);}
 }
 
 function switchTab(n,btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#tabs-row .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.app > .panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');document.getElementById('panel-'+n).classList.add('active');
+}
+function switchIntelSub(n,btn){
+  document.querySelectorAll('#intel-subnav .intel-subtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.intel-subpanel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');document.getElementById('intel-'+n).classList.add('active');
+  // Lazy-load on first visit to each subsection
+  if(n==='reddit' && redditItemsRaw.length===0) loadReddit();
 }
 function filterCal(f,btn){
   calFilter=f;
   document.querySelectorAll('#cal-chips .chip').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');renderCal();
 }
-function filterNews(f,btn){
-  newsFilter=f;
-  document.querySelectorAll('#news-chips .chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');renderNews();
-}
-function filterReddit(f,btn){
-  redditFilter=f;
-  document.querySelectorAll('#reddit-chips .chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');renderReddit();
-}
 
 // ════════════════════════════════════════════════════════════════
 // EVENTS & RELEASES — single deduplicated RAWG query (shared pool)
 // ════════════════════════════════════════════════════════════════
-let RAWG_POOL_CACHE=null; // shared across releases — fixes the "Forza in one tab, not the other" inconsistency
-
 async function fetchRawgPool(dateFrom, dateTo){
   const [p1,p2,p3] = await Promise.all([
     rawg('games',{dates:`${dateFrom},${dateTo}`, ordering:'released',     page_size:'40', page:'1'}),
@@ -397,7 +424,6 @@ async function loadRawgReleases(){
   const dateTo   = isoDate(daysAhead(730));
   try{
     const pool = await fetchRawgPool(dateFrom, dateTo);
-    RAWG_POOL_CACHE = pool; // cached for reuse if needed elsewhere
     calReleases=[];
     for(const g of pool){
       const info=resolveTicker(g.name);
@@ -555,7 +581,6 @@ async function runMom(){
 
 // ════════════════════════════════════════════════════════════════
 // LEAK WATCH — Claude search, hard 14-day cutoff enforced client-side
-// Replaces the old RAWG-based filing monitor entirely. No RAWG calls.
 // ════════════════════════════════════════════════════════════════
 async function runLeakWatch(){
   const el=document.getElementById('leak-list');
@@ -582,15 +607,12 @@ async function runLeakWatch(){
 
     let items = parseJSON(raw) || [];
 
-    // Hard client-side backstop: drop anything outside the 14-day window,
-    // even if Claude's own filtering let something slip through.
     items = items.filter(it=>{
       const d = parseAnyDate(it.date);
-      if(!d) return false; // no parseable date = can't verify recency, drop it
-      return d >= cutoffDate && d <= daysAhead(1); // small forward buffer for timezone edge cases
+      if(!d) return false;
+      return d >= cutoffDate && d <= daysAhead(1);
     });
 
-    // Resolve ticker via title map as a fallback/cross-check if Claude didn't supply one
     items.forEach(it=>{
       if(!it.ticker){
         const info = resolveTicker(it.title||'');
@@ -611,7 +633,7 @@ async function runLeakWatch(){
 function renderLeakWatch(items){
   const el=document.getElementById('leak-list');
   if(!items.length){
-    el.innerHTML='<div class="loading" style="padding:30px 0">No ESRB/PEGI leak coverage found in the last 14 days. This is common — leaks are infrequent. Try again later or widen scope manually if needed.</div>';
+    el.innerHTML='<div class="loading" style="padding:30px 0">No ESRB/PEGI leak coverage found in the last 14 days. This is common — leaks are infrequent. Try again later.</div>';
     return;
   }
   el.innerHTML = items.map(i=>{
@@ -631,7 +653,7 @@ function renderLeakWatch(items){
 }
 
 // ════════════════════════════════════════════════════════════════
-// GAMING NEWS — free RSS, no AI tokens
+// GAMING NEWS — free RSS, filtered to publisher + financial relevance
 // ════════════════════════════════════════════════════════════════
 const GAMING_FEEDS = [
   {name:'IGN',        url:'https://www.ign.com/rss/v2/articles/feed', tag:'IGN',        bg:'#FFE6E6', c:'#A32D2D'},
@@ -642,39 +664,53 @@ const GAMING_FEEDS = [
 
 async function loadGamingNews(){
   const el=document.getElementById('news-list');
-  el.innerHTML='<div class="loading">Loading gaming news from 4 sources...</div>';
+  el.innerHTML='<div class="loading">Loading and filtering gaming news from 4 sources...</div>';
   try{
     const results = await Promise.allSettled(GAMING_FEEDS.map(f=>rss(f.url)));
-    newsItems=[];
+    newsItemsRaw=[];
     results.forEach((res,idx)=>{
       if(res.status!=='fulfilled') return;
       const feed=GAMING_FEEDS[idx];
       for(const item of res.value){
-        newsItems.push({...item, _source:feed.name, _tag:feed.tag, _bg:feed.bg, _c:feed.c});
+        newsItemsRaw.push({...item, _source:feed.name, _tag:feed.tag, _bg:feed.bg, _c:feed.c});
       }
     });
-    newsItems.sort((a,b)=>{
+
+    // Filter: must mention a publicly traded publisher AND a financial-relevance term
+    newsItemsFiltered = newsItemsRaw.filter(item=>{
+      const text = (item.title||'') + ' ' + (item.description||'');
+      const pub = matchPublisher(text);
+      if(!pub) return false;
+      if(!isFinanciallyRelevant(text)) return false;
+      item._matchedPublisher = pub.ticker;
+      return true;
+    });
+
+    newsItemsFiltered.sort((a,b)=>{
       const da=parseAnyDate(a.pubDate), db=parseAnyDate(b.pubDate);
       if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
       return db-da;
     });
+
     renderNews();
     const el2=document.getElementById('news-count');
-    if(el2) el2.textContent = newsItems.length?`${newsItems.length} articles`:'';
+    if(el2) el2.textContent = `${newsItemsFiltered.length} of ${newsItemsRaw.length} fetched`;
     const failedCount = results.filter(r=>r.status!=='fulfilled').length;
-    if(failedCount) warnEl('news-list', `${failedCount} of ${GAMING_FEEDS.length} feeds did not respond — showing available sources`);
+    if(failedCount) warnEl('news-list', `${failedCount} of ${GAMING_FEEDS.length} feeds did not respond`);
   }catch(e){errEl('news-list','Feed error: '+e.message);}
 }
 
 function renderNews(){
   const el=document.getElementById('news-list');
-  const items = newsFilter==='all' ? newsItems : newsItems.filter(i=>i._source===newsFilter);
-  if(!items.length){el.innerHTML='<div class="loading">No articles for this filter</div>';return;}
-  el.innerHTML = items.slice(0,60).map(i=>`
+  if(!newsItemsFiltered.length){
+    el.innerHTML='<div class="loading">No articles matched a publicly traded publisher + financial-relevance filter in the current feed batch. Try refreshing — feeds rotate frequently.</div>';
+    return;
+  }
+  el.innerHTML = newsItemsFiltered.slice(0,60).map(i=>`
     <div class="feed-row">
       <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
       <div style="flex:1;min-width:0">
-        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a></div>
+        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a><span class="feed-match-tag">${i._matchedPublisher}</span></div>
         ${i.description?`<div class="feed-desc">${i.description}${i.description.length>=200?'…':''}</div>`:''}
         <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
       </div>
@@ -682,33 +718,36 @@ function renderNews(){
 }
 
 // ════════════════════════════════════════════════════════════════
-// FINANCE NEWS — Google News RSS per-company + Bloomberg/Reuters filter
+// FINANCE NEWS — per-company Google News, 14-day window + relevance filter
 // ════════════════════════════════════════════════════════════════
 async function loadFinanceNews(){
   const sel=document.getElementById('fin-select');
   const company=sel.value;
+  const ticker=sel.options[sel.selectedIndex].dataset.ticker;
   const label=sel.options[sel.selectedIndex].text;
   const el=document.getElementById('fin-list');
   el.innerHTML=`<div class="loading">Searching finance news for ${label}...</div>`;
+
+  const cutoffDate = daysAgo(14);
+
   try{
-    const gnewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(company+' stock gaming')}&hl=en-US&gl=US&ceid=US:en`;
-    const bloombergUrl = 'https://www.bloomberg.com/feeds/podcasts/etf-report.xml'; // fallback if main feed unavailable
-    const reutersUrl = 'https://news.google.com/rss/search?q=' + encodeURIComponent(company+' Reuters gaming earnings') + '&hl=en-US&gl=US&ceid=US:en';
+    // "when:14d" is a Google News search operator that restricts results to the last 14 days
+    const gnewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(company+' stock OR earnings OR sales when:14d')}&hl=en-US&gl=US&ceid=US:en`;
+    const items = await rss(gnewsUrl);
 
-    const [gnews, reuters] = await Promise.allSettled([rss(gnewsUrl), rss(reutersUrl)]);
+    const pubMatcher = PUB_MATCHERS.find(m=>m.ticker===ticker);
 
-    finItems=[];
-    if(gnews.status==='fulfilled'){
-      for(const item of gnews.value){ finItems.push({...item, _tag:'Google News', _bg:'#E6F1FB', _c:'#185FA5'}); }
-    }
-    if(reuters.status==='fulfilled'){
-      for(const item of reuters.value){
-        if(/reuters|bloomberg/i.test(item.title+' '+(item.description||''))){
-          finItems.push({...item, _tag:'Reuters/Bloomberg', _bg:'#FAEEDA', _c:'#854F0B'});
-        }
-      }
-    }
-    // Dedup by title
+    finItems = items.filter(item=>{
+      const text = (item.title||'') + ' ' + (item.description||'');
+      // Must actually mention this specific company (not just appear in a query match)
+      if(pubMatcher && !pubMatcher.regex.test(text)) return false;
+      if(!isFinanciallyRelevant(text)) return false;
+      // Enforce 14-day window client-side as a backstop to the when:14d operator
+      const d = parseAnyDate(item.pubDate);
+      if(d && d < cutoffDate) return false;
+      return true;
+    });
+
     const seen=new Set();
     finItems = finItems.filter(i=>{
       const k=(i.title||'').toLowerCase().trim();
@@ -721,11 +760,11 @@ async function loadFinanceNews(){
     });
 
     if(!finItems.length){
-      el.innerHTML='<div class="loading">No recent finance articles found for this company</div>';
+      el.innerHTML='<div class="loading">No articles in the last 14 days matched both the company and a financial-relevance term. This can happen for quieter companies — try again after their next earnings window.</div>';
     } else {
       el.innerHTML = finItems.slice(0,40).map(i=>`
         <div class="feed-row">
-          <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
+          <span class="feed-source-tag" style="background:#E6F1FB;color:#185FA5">Google News</span>
           <div style="flex:1;min-width:0">
             <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a></div>
             <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
@@ -733,54 +772,75 @@ async function loadFinanceNews(){
         </div>`).join('');
     }
     const cEl=document.getElementById('fin-count');
-    if(cEl) cEl.textContent = finItems.length?`${finItems.length} articles`:'';
+    if(cEl) cEl.textContent = `${finItems.length} of ${items.length} fetched (14d)`;
   }catch(e){errEl('fin-list','Error: '+e.message);}
 }
 
 // ════════════════════════════════════════════════════════════════
-// REDDIT — free RSS, no AI tokens
+// REDDIT — per-publisher SEARCH (not generic hot feed) + relevance filter
 // ════════════════════════════════════════════════════════════════
-const REDDIT_FEEDS = [
-  {sub:'gaming', url:'https://www.reddit.com/r/gaming/hot/.rss?limit=25', tag:'r/gaming', bg:'#FAECE7', c:'#993C1D'},
-  {sub:'games',  url:'https://www.reddit.com/r/Games/hot/.rss?limit=25',  tag:'r/Games',  bg:'#E1F5EE', c:'#0F6E56'},
-  {sub:'stocks', url:'https://www.reddit.com/r/stocks/search.rss?q=gaming&restrict_sr=on&sort=new&limit=25', tag:'r/stocks', bg:'#E6F1FB', c:'#185FA5'},
-];
-
 async function loadReddit(){
   const el=document.getElementById('reddit-list');
-  el.innerHTML='<div class="loading">Loading Reddit posts from 3 subreddits...</div>';
+  el.innerHTML='<div class="loading">Searching Reddit across publicly traded publishers...</div>';
   try{
-    const results = await Promise.allSettled(REDDIT_FEEDS.map(f=>rss(f.url)));
-    redditItems=[];
+    // Build one targeted search query per publisher rather than pulling generic "hot" feeds.
+    // This searches r/gaming, r/Games, and r/stocks simultaneously via Reddit's multi-sub search.
+    const queries = PUBLISHERS.map(p=>{
+      const term = encodeURIComponent(p.names[0]);
+      return `https://www.reddit.com/r/gaming+Games+stocks/search.rss?q=${term}&restrict_sr=on&sort=new&limit=15&t=week`;
+    });
+
+    const results = await Promise.allSettled(queries.map(u=>rss(u)));
+    redditItemsRaw=[];
     results.forEach((res,idx)=>{
       if(res.status!=='fulfilled') return;
-      const feed=REDDIT_FEEDS[idx];
+      const pub=PUBLISHERS[idx];
       for(const item of res.value){
-        redditItems.push({...item, _source:feed.sub, _tag:feed.tag, _bg:feed.bg, _c:feed.c});
+        redditItemsRaw.push({...item, _expectedTicker:pub.ticker});
       }
     });
-    redditItems.sort((a,b)=>{
+
+    // Dedup by link first (same post can surface from multiple publisher searches)
+    const seenLinks=new Set();
+    redditItemsRaw = redditItemsRaw.filter(i=>{
+      if(seenLinks.has(i.link)) return false; seenLinks.add(i.link); return true;
+    });
+
+    // Filter: must mention a publisher AND a financial-relevance term
+    redditItemsFiltered = redditItemsRaw.filter(item=>{
+      const text = (item.title||'') + ' ' + (item.description||'');
+      const pub = matchPublisher(text);
+      if(!pub) return false;
+      if(!isFinanciallyRelevant(text)) return false;
+      item._matchedPublisher = pub.ticker;
+      return true;
+    });
+
+    redditItemsFiltered.sort((a,b)=>{
       const da=parseAnyDate(a.pubDate), db=parseAnyDate(b.pubDate);
       if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
       return db-da;
     });
+
     renderReddit();
     const el2=document.getElementById('reddit-count');
-    if(el2) el2.textContent = redditItems.length?`${redditItems.length} posts`:'';
+    if(el2) el2.textContent = `${redditItemsFiltered.length} of ${redditItemsRaw.length} fetched`;
     const failedCount = results.filter(r=>r.status!=='fulfilled').length;
-    if(failedCount) warnEl('reddit-list', `${failedCount} of ${REDDIT_FEEDS.length} subreddit feeds did not respond`);
+    if(failedCount) warnEl('reddit-list', `${failedCount} of ${queries.length} publisher searches did not respond`);
   }catch(e){errEl('reddit-list','Feed error: '+e.message);}
 }
 
 function renderReddit(){
   const el=document.getElementById('reddit-list');
-  const items = redditFilter==='all' ? redditItems : redditItems.filter(i=>i._source===redditFilter);
-  if(!items.length){el.innerHTML='<div class="loading">No posts for this filter</div>';return;}
-  el.innerHTML = items.slice(0,60).map(i=>`
+  if(!redditItemsFiltered.length){
+    el.innerHTML='<div class="loading">No posts matched a publicly traded publisher + financial-relevance filter this week. Try refreshing later.</div>';
+    return;
+  }
+  el.innerHTML = redditItemsFiltered.slice(0,60).map(i=>`
     <div class="feed-row">
-      <span class="feed-source-tag" style="background:${i._bg};color:${i._c}">${i._tag}</span>
+      <span class="feed-source-tag" style="background:#FAECE7;color:#993C1D">Reddit</span>
       <div style="flex:1;min-width:0">
-        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a></div>
+        <div class="feed-title"><a href="${i.link}" target="_blank" rel="noopener">${i.title}</a><span class="feed-match-tag">${i._matchedPublisher}</span></div>
         <div class="feed-meta">${fmtRelative(i.pubDate)}</div>
       </div>
     </div>`).join('');
