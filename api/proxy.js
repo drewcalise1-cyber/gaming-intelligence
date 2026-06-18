@@ -52,6 +52,40 @@ export default async function handler(req, res) {
     return;
   }
 
+  // ── SEC EDGAR passthrough ───────────────────────────────────────────
+  // SEC requires a descriptive User-Agent (name + contact) on every request,
+  // or it returns 403. Also enforces a combined 10 req/sec rate limit across
+  // all EDGAR endpoints — callers should space out requests, not fire bursts.
+  if (body.target === 'edgar') {
+    const SEC_USER_AGENT = 'GamingIntelligenceDashboard contact@gaming-intelligence-dashboard.app';
+    try {
+      let url;
+      if (body.edgarType === 'fulltext') {
+        // Full-text search across all EDGAR filings since 2001
+        const params = new URLSearchParams(body.params || {});
+        url = `https://efts.sec.gov/LATEST/search-index?${params.toString()}`;
+      } else if (body.edgarType === 'submissions') {
+        // Per-company filing history, e.g. CIK0000789019.json
+        const cik = String(body.cik || '').padStart(10, '0');
+        url = `https://data.sec.gov/submissions/CIK${cik}.json`;
+      } else {
+        res.status(400).json({ error: 'edgarType must be "fulltext" or "submissions"' });
+        return;
+      }
+      const r = await fetch(url, {
+        headers: {
+          'User-Agent': SEC_USER_AGENT,
+          'Accept': 'application/json',
+        },
+      });
+      const data = await r.json();
+      res.status(r.status).json(data);
+    } catch (e) {
+      res.status(500).json({ error: String(e) });
+    }
+    return;
+  }
+
   // ── Default: Anthropic API ─────────────────────────────────────────
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
