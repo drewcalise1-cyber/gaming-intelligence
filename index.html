@@ -128,6 +128,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
       <button class="intel-subtab" onclick="switchIntelSub('fin',this)">Finance news</button>
       <button class="intel-subtab" onclick="switchIntelSub('reddit',this)">Reddit</button>
       <button class="intel-subtab" onclick="switchIntelSub('edgar',this)">SEC filings</button>
+      <button class="intel-subtab" onclick="switchIntelSub('earnings',this)">Earnings calendar</button>
     </div>
 
     <!-- MEDIA MOMENTUM -->
@@ -223,6 +224,28 @@ h1{font-size:20px;font-weight:500;margin-bottom:4px;}
         10-Q/10-K (quarterly/annual), 20-F/6-K (Sony's foreign-issuer equivalents), and Form 4 (insider trading)
       </p>
       <div id="edgar-list"><div class="loading">Select a company and click Search</div></div>
+    </div>
+
+    <!-- EARNINGS CALENDAR -->
+    <div class="intel-subpanel" id="intel-earnings">
+      <div class="panel-header">
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="earnings-select"></select>
+          <button class="btn" onclick="loadEarningsCalendar()">Search</button>
+        </div>
+        <span class="count-badge" id="earnings-count"></span>
+      </div>
+      <p class="note" style="color:#854F0B">
+        <strong>Coverage limit:</strong> reliable for Microsoft, Take-Two, EA, and Roblox (US-listed). Sony and the
+        remaining Japanese/European companies have thin or no coverage on Alpha Vantage's free tier &mdash; a query may
+        return nothing for those even when a real earnings date exists.
+      </p>
+      <p class="note">
+        Powered by Alpha Vantage (free tier: 25 requests/day total, shared with the backtester) &middot; results are
+        cached per-company for this session and won't re-fetch automatically &mdash; click Search again only if you
+        need fresh data
+      </p>
+      <div id="earnings-list"><div class="loading">Select a company and click Search</div></div>
     </div>
   </div>
 
@@ -456,6 +479,13 @@ function populateSelects(){
   const edgarSel=document.getElementById('edgar-select');
   if(edgarSel){
     edgarSel.innerHTML = EDGAR_COMPANIES.map(c=>`<option value="${c.ticker}">${c.label}</option>`).join('');
+  }
+
+  // Earnings dropdown — same 5-company set, since Alpha Vantage free tier
+  // coverage roughly tracks the same US/ADR-listed boundary
+  const earningsSel=document.getElementById('earnings-select');
+  if(earningsSel){
+    earningsSel.innerHTML = EDGAR_COMPANIES.map(c=>`<option value="${c.ticker}">${c.label}</option>`).join('');
   }
 }
 
@@ -1200,6 +1230,85 @@ function renderEdgarFilings(company){
       </div>
     </div>`;
   }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// EARNINGS CALENDAR — Alpha Vantage EARNINGS_CALENDAR endpoint
+// Free tier: 25 requests/day TOTAL, shared with the backtester. Results
+// are cached per-ticker for the session so re-visiting a company or
+// switching tabs never costs another call.
+// ════════════════════════════════════════════════════════════════
+const earningsCache = new Map(); // ticker -> rows[]
+
+async function loadEarningsCalendar(){
+  const sel=document.getElementById('earnings-select');
+  const ticker=sel.value;
+  const label=sel.options[sel.selectedIndex].text;
+  const el=document.getElementById('earnings-list');
+
+  if(earningsCache.has(ticker)){
+    renderEarningsCalendar(earningsCache.get(ticker), label, true);
+    return;
+  }
+
+  el.innerHTML=`<div class="loading">Fetching earnings calendar for ${label} from Alpha Vantage...</div>`;
+
+  try{
+    const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        target:'alphavantage', avFunction:'EARNINGS_CALENDAR',
+        params:{symbol:ticker, horizon:'12month'}
+      })});
+    const data=await r.json();
+
+    if(data.error){
+      throw new Error(typeof data.error==='string'?data.error:JSON.stringify(data.error));
+    }
+    if(!data.rows){
+      throw new Error('Unexpected response shape from Alpha Vantage');
+    }
+
+    // Defensive client-side filter to this ticker — the symbol param should
+    // already scope the query, but filtering here costs nothing and protects
+    // against any upstream behavior I haven't been able to verify firsthand.
+    const rows = data.rows.filter(row => (row.symbol||'').toUpperCase() === ticker.toUpperCase());
+
+    earningsCache.set(ticker, rows);
+    renderEarningsCalendar(rows, label, false);
+
+  }catch(e){
+    errEl('earnings-list','Alpha Vantage error: '+e.message+' — if this mentions a missing key, add ALPHA_VANTAGE_API_KEY in Vercel environment variables and redeploy.');
+  }
+}
+
+function renderEarningsCalendar(rows, label, fromCache){
+  const el=document.getElementById('earnings-list');
+  const cEl=document.getElementById('earnings-count');
+
+  if(!rows.length){
+    el.innerHTML=`<div class="loading">No scheduled earnings found for ${label} in the next 12 months. This can mean thin coverage on the free tier rather than no earnings actually scheduled — worth double-checking elsewhere if this seems wrong.</div>`;
+    if(cEl) cEl.textContent='0 results';
+    return;
+  }
+
+  rows.sort((a,b)=> new Date(a.reportDate) - new Date(b.reportDate));
+
+  const today = new Date();
+  el.innerHTML = rows.map(r=>{
+    const reportDate = new Date(r.reportDate+'T00:00:00');
+    const isPast = reportDate < today;
+    const estimate = r.estimate ? `Est. EPS ${r.currency||'USD'} ${r.estimate}` : 'No estimate available';
+    return `
+    <div class="feed-row">
+      <span class="feed-source-tag" style="background:${isPast?'var(--bg3)':'#E1F5EE'};color:${isPast?'var(--text3)':'#0F6E56'}">${isPast?'Past':'Upcoming'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="feed-title">${r.name||r.symbol} earnings — ${fmtDate(r.reportDate)}</div>
+        <div class="feed-meta">${estimate} &middot; fiscal period ending ${fmtDate(r.fiscalDateEnding)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if(cEl) cEl.textContent = `${rows.length} scheduled${fromCache?' (cached this session)':''}`;
 }
 
 init();
