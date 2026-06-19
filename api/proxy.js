@@ -86,6 +86,44 @@ export default async function handler(req, res) {
     return;
   }
 
+  // ── Alpha Vantage passthrough ───────────────────────────────────────
+  // Free tier: 25 requests/day total, 5/minute, shared across every feature
+  // using this key (earnings calendar AND backtester price history both
+  // draw from the same budget) — callers should cache aggressively client-side.
+  if (body.target === 'alphavantage') {
+    try {
+      const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+      if (!apiKey) {
+        res.status(200).json({ error: 'ALPHA_VANTAGE_API_KEY missing in Vercel environment variables' });
+        return;
+      }
+      const fn = body.avFunction;
+      if (fn !== 'EARNINGS_CALENDAR' && fn !== 'TIME_SERIES_DAILY') {
+        res.status(400).json({ error: 'avFunction must be "EARNINGS_CALENDAR" or "TIME_SERIES_DAILY"' });
+        return;
+      }
+      const params = new URLSearchParams(body.params || {});
+      params.set('function', fn);
+      params.set('apikey', apiKey);
+      const url = `https://www.alphavantage.co/query?${params.toString()}`;
+      const r = await fetch(url);
+
+      if (fn === 'EARNINGS_CALENDAR') {
+        // This endpoint returns CSV (unlike most Alpha Vantage endpoints, which
+        // return JSON) — parse server-side so the client always gets JSON back.
+        const csvText = await r.text();
+        const rows = parseCsv(csvText);
+        res.status(200).json({ rows });
+      } else {
+        const data = await r.json();
+        res.status(200).json(data);
+      }
+    } catch (e) {
+      res.status(500).json({ error: String(e) });
+    }
+    return;
+  }
+
   // ── Default: Anthropic API ─────────────────────────────────────────
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -105,6 +143,36 @@ export default async function handler(req, res) {
 }
 
 // ── Minimal RSS/Atom parser (regex-based, no dependencies) ──────────
+// ── Minimal CSV parser (for Alpha Vantage EARNINGS_CALENDAR, the one
+// endpoint on that API that returns CSV instead of JSON) ────────────
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 1) return [];
+  const headers = splitCsvLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const fields = splitCsvLine(lines[i]);
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = fields[idx] !== undefined ? fields[idx] : ''; });
+    rows.push(row);
+  }
+  return rows;
+}
+function splitCsvLine(line) {
+  // Basic quoted-field handling — company names can contain commas (e.g. "Take-Two Interactive, Inc.")
+  const out = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQuotes = !inQuotes; continue; }
+    if (c === ',' && !inQuotes) { out.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+
 function parseRss(xml) {
   const items = [];
   const rssMatches = xml.matchAll(/<item[\s>][\s\S]*?<\/item>/gi);
