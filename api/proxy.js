@@ -146,7 +146,11 @@ export default async function handler(req, res) {
 // ── Minimal CSV parser (for Alpha Vantage EARNINGS_CALENDAR, the one
 // endpoint on that API that returns CSV instead of JSON) ────────────
 function parseCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
+  // Split on \r\n or \n, AND strip any trailing \r per-line as a backstop —
+  // some CSV sources mix line-ending styles inconsistently, and a stray \r
+  // surviving into a field value would silently break exact-match comparisons
+  // downstream (e.g. ticker symbol filtering).
+  const lines = text.trim().split(/\r?\n/).map(l => l.replace(/\r$/, ''));
   if (lines.length < 1) return [];
   const headers = splitCsvLine(lines[0]);
   const rows = [];
@@ -166,10 +170,10 @@ function splitCsvLine(line) {
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
     if (c === '"') { inQuotes = !inQuotes; continue; }
-    if (c === ',' && !inQuotes) { out.push(cur); cur = ''; continue; }
+    if (c === ',' && !inQuotes) { out.push(cur.trim()); cur = ''; continue; }
     cur += c;
   }
-  out.push(cur);
+  out.push(cur.trim()); // trim the final field too — previously this was the one field left unstripped
   return out;
 }
 
