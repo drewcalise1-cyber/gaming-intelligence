@@ -1271,10 +1271,19 @@ async function loadEarningsCalendar(){
     // Defensive client-side filter to this ticker — the symbol param should
     // already scope the query, but filtering here costs nothing and protects
     // against any upstream behavior I haven't been able to verify firsthand.
-    const rows = data.rows.filter(row => (row.symbol||'').toUpperCase() === ticker.toUpperCase());
+    // Trim both sides before comparing, since raw CSV fields can carry stray
+    // whitespace that would otherwise cause silent false-negative matches.
+    const rawCount = data.rows.length;
+    const rows = data.rows.filter(row => (row.symbol||'').trim().toUpperCase() === ticker.trim().toUpperCase());
 
     earningsCache.set(ticker, rows);
     renderEarningsCalendar(rows, label, false);
+
+    // If the filter dropped anything, that's worth knowing rather than hiding —
+    // could mean the API returned other companies' data, or a field-matching bug.
+    if(rows.length < rawCount){
+      warnEl('earnings-list', `Note: Alpha Vantage returned ${rawCount} total rows for this query, but only ${rows.length} matched ticker "${ticker}" exactly. This could mean the API included other companies' earnings dates in the response.`);
+    }
 
   }catch(e){
     errEl('earnings-list','Alpha Vantage error: '+e.message+' — if this mentions a missing key, add ALPHA_VANTAGE_API_KEY in Vercel environment variables and redeploy.');
